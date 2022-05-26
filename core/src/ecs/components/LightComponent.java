@@ -1,12 +1,14 @@
 package ecs.components;
 
+import com.badlogic.gdx.math.Vector2;
+
 public class LightComponent implements Component {
-	float positionX, positionY, radius;
-	float lightIntensity = 1.f;
+	private Vector2 position;
+	private float radius;
+	private float lightIntensity = 1.f;
 
 	public LightComponent(float positionX, float positionY, float radius, float lightIntensity) {
-		this.positionX = positionX;
-		this.positionY = positionY;
+		position = new Vector2(positionX, positionY);
 		this.radius = radius;
 		this.lightIntensity = lightIntensity;
 	}
@@ -16,24 +18,21 @@ public class LightComponent implements Component {
 	}
 
 	public void setRadius(float radius) {
-		if (radius > 0f)
+		if (radius >= 0f)
 			this.radius = radius;
 	}
 
-	public float getX() {
-		return positionX;
+	public void setPosition(float positionX, float positionY) {
+		this.position.x = positionX;
+		this.position.y = positionY;
 	}
-
-	public void setX(float positionX) {
-		this.positionX = positionX;
+	
+	public Vector2 getPosition() {
+		return new Vector2(position);
 	}
-
-	public float getY() {
-		return positionY;
-	}
-
-	public void setY(float positionY) {
-		this.positionY = positionY;
+	
+	public void setPosition(Vector2 position) {
+		setPosition(position.x, position.y);
 	}
 
 	public float getLightIntensity() {

@@ -6,6 +6,7 @@ import com.badlogic.gdx.utils.ObjectMap;
 import ecs.components.AnimationComponent;
 import ecs.components.Component;
 import ecs.components.EventComponent;
+import ecs.components.GuiComponent;
 import ecs.components.LightComponent;
 import ecs.components.PhysicsComponent;
 import ecs.components.SpriteComponent;
@@ -31,6 +32,7 @@ public class ComponentDatabase {
 		database.put(AnimationComponent.class, new Array<AnimationComponent>());
 		database.put(LightComponent.class, new Array<LightComponent>());
 		database.put(EventComponent.class, new Array<EventComponent>());
+		database.put(GuiComponent.class, new Array<GuiComponent>());
 	}
 	
 	public <T extends Component> void addComponent(T component) {

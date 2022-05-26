@@ -5,7 +5,7 @@ import com.badlogic.gdx.Gdx;
 
 import screens.GameScreen;
 
-public class BlockBreaker extends Game {
+public class CatchMe extends Game {
 	@Override
 	public void create() {
 		this.setScreen(new GameScreen());

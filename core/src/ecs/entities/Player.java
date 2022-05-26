@@ -1,5 +1,7 @@
 package ecs.entities;
 
+import java.beans.EventSetDescriptor;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -8,17 +10,18 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.utils.Array;
+import com.gdx.game.powerups.PowerUp;
 
 import ecs.ComponentDatabase;
 import ecs.Entity;
 import ecs.components.AnimationComponent;
 import ecs.components.CollisionCallback;
-import ecs.components.Event;
 import ecs.components.EventComponent;
 import ecs.components.LightComponent;
 import ecs.components.PhysicsComponent;
 import ecs.components.PhysicsComponent.BodyType;
 import ecs.components.PhysicsComponent.Fixture;
+import patterns.Event;
 import patterns.EventCallback;
 import patterns.WalkCommand;
 import patterns.WalkCommand.Directions;
@@ -29,7 +32,7 @@ public class Player extends Entity {
 	private String playerName;
 	private boolean moving = false;
 	private WalkCommand.Directions lastMovingDirection = null;
-	private Item item = null;
+	private PowerUp powerUp = null;
 
 	public Player(ComponentDatabase componentDB, boolean player1) {
 		super(componentDB);
@@ -91,17 +94,13 @@ public class Player extends Entity {
 			
 			@Override
 			public void onCollision(Fixture other) {
-				if (other.collisionResponseFlags == PhysicsComponent.ITEM_FLAG) {
-					CommandMapper commandMapper = CommandMapper.getInstance();
-					CommandMap throwCommand = commandMapper.getCommandKey(Player.this.getPlayerName() + "Interact");
-					if (Gdx.input.isKeyJustPressed(throwCommand.getKey())) {
-						throwCommand.getCommand().execute(Player.this, 0f);
-						EventComponent ec = getComponent(EventComponent.class);
-						ec.observedEvents.add("ItemGet");
-					}
+				if ((other.collisionResponseFlags & PhysicsComponent.ITEM_FLAG) != 0) {
+					if (powerUp == null)
+						getComponent(EventComponent.class).publishedEvents.add(new Event("PickPowerUp", null));
 				}
 			}
-		});
+			
+		}, new Vector2(), 5.f);
 		
 		Vector2 bodyPosition = new Vector2(-boundingRectangle.width / 4.f, -boundingRectangle.height / 2.f);
 		Vector2 bodySize = new Vector2(boundingRectangle.width / 2f, boundingRectangle.height / 4f);
@@ -117,26 +116,38 @@ public class Player extends Entity {
 		
 		addComponent(playerPhysicsComp);
 		
-		addComponent(new LightComponent(30f, 30f, 2.f, .5f));
+		Vector2 worldPosition = playerPhysicsComp.getWorldPosition();
+		addComponent(new LightComponent(worldPosition.x, worldPosition.y, 2.f, .5f));
 		EventComponent ec = new EventComponent(new EventCallback() {
 			
 			@Override
 			public void onEventObserved(Event event) {
 				EventComponent eventComp = getComponent(EventComponent.class);
-				if (event.message.contentEquals("PickItem")) {
-					Item item = (Item) event.data;
-					Player.this.item = item;
+				if (event.message.contentEquals("CollectPowerUp")) {
+					PowerUp powerup = (PowerUp) event.data;
+					Player.this.powerUp = powerup;
 					eventComp.observedEvents.removeValue(event.message, false);
 				}
 			}
 
 			@Override
 			public void onMyEventObserved(Event event) {
+				EventComponent eventComp = getComponent(EventComponent.class);
+				if (event.message.contentEquals("PickPowerUp")) {
+					eventComp.publishedEvents.removeValue(event, false);
+					eventComp.observedEvents.add("CollectPowerUp");
+				}
 			}
 		});
+		
+		ec.observedEvents.add("PickPowerUp");
 		addComponent(ec);
 	}
-
+	
+	public PowerUp getPowerUp() {
+		return powerUp;
+	}
+	
 	@Override
 	public void update(float deltaTime) {
 		CommandMapper commandMapper = CommandMapper.getInstance();
@@ -178,6 +189,7 @@ public class Player extends Entity {
 		
 		if (!walking) {
 			animationComponent.setActiveAnimation(animationComponent.getActiveAnimation().replace("Walk", "Idle"));
+			getComponent(PhysicsComponent.class).setMovingDirection(new Vector2(0.f, 0.f));
 		}
 		
 		moving = walking;
@@ -188,8 +200,19 @@ public class Player extends Entity {
 		sprite.setY(worldPosition.y - sprite.getHeight() / 2f);
 		
 		LightComponent lightComponent = getComponent(LightComponent.class);
-		lightComponent.setX(animationComponent.getCurrentSprite().getX() + animationComponent.getCurrentSprite().getWidth() / 2.f);
-		lightComponent.setY(animationComponent.getCurrentSprite().getY() + animationComponent.getCurrentSprite().getHeight() / 2.f);
+		lightComponent.setPosition(worldPosition);
+		
+		if (powerUp != null) {
+			CommandMap powerUpCommand = commandMapper.getCommandKey(playerName + "Interact");
+			if (Gdx.input.isKeyJustPressed(powerUpCommand.getKey())) {
+				powerUpCommand.getCommand().execute(this, deltaTime);
+			}
+			
+			powerUp.update(this, deltaTime);
+			if (powerUp.isFinished()) {
+				powerUp = null;
+			}
+		}
 	}
 
 	public String getPlayerName() {

@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import ecs.components.CollisionCallback;
-import ecs.components.Event;
 import ecs.components.EventComponent;
+import patterns.Event;
 import patterns.EventCallback;
 import utility.ImmutableArray;
 import utility.Pair;

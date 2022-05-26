@@ -27,21 +27,19 @@ public class WalkCommand implements Command {
 	@Override
 	public void execute(Entity entity, float deltaTime) {
 		PhysicsComponent physicsComp = entity.getComponent(PhysicsComponent.class);
-		Vector2 worldPosition = physicsComp.getWorldPosition();
 		switch (direction) {
 			case UP:
-				worldPosition.y += deltaTime * multiplier;
+				physicsComp.setMovingDirection(new Vector2(0.f, 1.f));
 				break;
 			case DOWN:
-				worldPosition.y -= deltaTime * multiplier;
+				physicsComp.setMovingDirection(new Vector2(0.f, -1.f));
 				break;
 			case LEFT:
-				worldPosition.x -= deltaTime * multiplier;
+				physicsComp.setMovingDirection(new Vector2(-1.f, 0f));
 				break;
 			case RIGHT:
-				worldPosition.x += deltaTime * multiplier;
+				physicsComp.setMovingDirection(new Vector2(1.f, 0f));
+				break;
 		}
-		
-		physicsComp.setWorldPosition(worldPosition);
 	}
 }

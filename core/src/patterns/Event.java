@@ -1,4 +1,4 @@
-package ecs.components;
+package patterns;
 
 public class Event {
 	public final String message;

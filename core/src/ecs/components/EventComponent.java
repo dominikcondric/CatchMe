@@ -2,6 +2,7 @@ package ecs.components;
 
 import com.badlogic.gdx.utils.Array;
 
+import patterns.Event;
 import patterns.EventCallback;
 
 

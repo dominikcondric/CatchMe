@@ -22,6 +22,9 @@ public class PhysicsSystem {
 	public void resolveCollisions(ImmutableArray<PhysicsComponent> physicsComponents, float deltaTime, float maxWidth, float maxHeight) {
 		for (PhysicsComponent physicsComp : physicsComponents) {
 			quadTree.addComponent(physicsComp);
+			Vector2 worldPosition = physicsComp.getWorldPosition();
+			worldPosition.mulAdd(physicsComp.getMovingDirection(), physicsComp.getMoveMultiplier() * deltaTime);
+			physicsComp.setWorldPosition(worldPosition);
 		}
 		
 		for (Node node : quadTree) {

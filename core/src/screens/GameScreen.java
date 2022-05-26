@@ -2,6 +2,8 @@ package screens;
 
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.gdx.game.Gameplay;
 
 import ecs.ComponentDatabase;
@@ -16,14 +18,16 @@ public class GameScreen implements Screen {
 	private RenderingSystem renderingSystem;
 	private PhysicsSystem physicsSystem;
 	private EventSystem eventSystem;
-	private Gameplay currentLevel;
+	private Gameplay gameplay;
 	private ComponentDatabase componentDatabase;
+	public static BitmapFont font; 
 	
 	public GameScreen() {
 		renderingSystem = new RenderingSystem();
 		physicsSystem = new PhysicsSystem();
 		eventSystem = new EventSystem();
 		componentDatabase = ComponentDatabase.create();
+		font = new BitmapFont(false);
 		
 		// Adding commands
 		CommandMapper commandMapper = CommandMapper.getInstance();
@@ -33,14 +37,19 @@ public class GameScreen implements Screen {
 		commandMapper.addCommand("P1WalkDown", new WalkCommand(WalkCommand.Directions.DOWN, 5.f), Input.Keys.DOWN);
 		commandMapper.addCommand("P1Interact", new UsePowerupCommand(), Input.Keys.ENTER);
 		
-		currentLevel = new Gameplay(componentDatabase, "Maps//Map.tmx");
+		commandMapper.addCommand("P2WalkRight", new WalkCommand(WalkCommand.Directions.RIGHT, 5.f), Input.Keys.D); 
+		commandMapper.addCommand("P2WalkLeft", new WalkCommand(WalkCommand.Directions.LEFT, 5.f), Input.Keys.A);
+		commandMapper.addCommand("P2WalkUp", new WalkCommand(WalkCommand.Directions.UP, 5.f), Input.Keys.W);
+		commandMapper.addCommand("P2WalkDown", new WalkCommand(WalkCommand.Directions.DOWN, 5.f), Input.Keys.S);
+		commandMapper.addCommand("P2Interact", new UsePowerupCommand(), Input.Keys.SPACE);
+		gameplay = new Gameplay(componentDatabase, "Maps//Map.tmx", 60f);
 	}
 	
 	@Override
 	public void render(float delta) {
-		currentLevel.update(eventSystem, delta);
-		currentLevel.checkCollisions(physicsSystem, delta);
-		currentLevel.draw(renderingSystem);
+		gameplay.update(eventSystem, delta);
+		gameplay.checkCollisions(physicsSystem, delta);
+		gameplay.draw(renderingSystem);
 	}
 	
 	@Override
@@ -49,8 +58,7 @@ public class GameScreen implements Screen {
 
 	@Override
 	public void resize(int width, int height) {
-		// TODO Auto-generated method stub
-		
+		gameplay.onScreenResize(width, height);
 	}
 
 	@Override
@@ -73,8 +81,8 @@ public class GameScreen implements Screen {
 
 	@Override
 	public void dispose() {
-		// TODO Auto-generated method stub
-		
+		renderingSystem.dispose();
+		font.dispose();
 	}
 
 }

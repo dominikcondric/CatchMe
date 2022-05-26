@@ -2,16 +2,16 @@ package ecs.entities;
 
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
-import com.gdx.game.PowerUp;
+import com.gdx.game.powerups.PowerUp;
 
 import ecs.ComponentDatabase;
 import ecs.Entity;
 import ecs.components.CollisionCallback;
-import ecs.components.Event;
 import ecs.components.EventComponent;
 import ecs.components.PhysicsComponent;
 import ecs.components.PhysicsComponent.BodyType;
 import ecs.components.PhysicsComponent.Fixture;
+import patterns.Event;
 import patterns.EventCallback;
 import ecs.components.SpriteComponent;
 
@@ -20,10 +20,13 @@ public class Item extends Entity {
 	private int hoverDirection = 1;
 	private float hoverMultiplier = .5f;
 	private float hoverDistance = 0.f;
+	private final Vector2 initialPosition;
+	private boolean inCollision = false;
 	
 	public Item(ComponentDatabase componentDB, PowerUp powerup, float positionX, float positionY) {
 		super(componentDB);
 		this.powerup = powerup;
+		initialPosition = new Vector2(positionX, positionY);
 		
 		SpriteComponent spriteComponent = new SpriteComponent(new Sprite(powerup.textureRegion));
 		spriteComponent.getSprite().setPosition(positionX + 0.125f, positionY + 0.125f);
@@ -33,10 +36,8 @@ public class Item extends Entity {
 		PhysicsComponent physicsComp = new PhysicsComponent(new Vector2(positionX + 0.5f, positionY + 0.5f), new CollisionCallback() {
 			
 			@Override
-			public void onCollision(Fixture other) {
-				EventComponent eventComponent = getComponent(EventComponent.class);
-				eventComponent.publishedEvents.add(new Event("PickItem", Item.this));
-				Item.this.destroy = true;
+			public void onCollision(Fixture fixture) {
+				inCollision = true;
 			}
 		});
 		
@@ -51,23 +52,27 @@ public class Item extends Entity {
 			
 			@Override
 			public void onMyEventObserved(Event event) {
-				EventComponent eventComponent = getComponent(EventComponent.class);
-				eventComponent.publishedEvents.removeValue(event, false);
+				Item.this.destroy = true;
 			}
 			
 			@Override
 			public void onEventObserved(Event event) {
-				// TODO Auto-generated method stub
-				
+				if (event.message.contentEquals("PickPowerUp") && inCollision) {
+					EventComponent eventComponent = getComponent(EventComponent.class);
+					eventComponent.publishedEvents.add(new Event("CollectPowerUp", Item.this.powerup));
+					eventComponent.observedEvents.removeValue(event.message, false);
+				}
 			}
 		});
 		
 		
+		eventComponent.observedEvents.add("PickPowerUp");
 		addComponent(eventComponent);
 	}
 
 	@Override
 	public void update(float deltaTime) {
+		inCollision = false;
 		PhysicsComponent physicsComp = getComponent(PhysicsComponent.class);
 		hoverDistance += deltaTime * hoverMultiplier;
 		if (hoverDistance > 0.3f) { 
@@ -78,6 +83,10 @@ public class Item extends Entity {
 		physicsComp.setWorldPosition(physicsComp.getWorldPosition().add(0.f, deltaTime * hoverMultiplier * hoverDirection));
 		Sprite sprite = getComponent(SpriteComponent.class).getSprite();
 		sprite.setPosition(sprite.getX(), physicsComp.getWorldPosition().y - sprite.getHeight() / 2.f);
+	}
+
+	public Vector2 getInitialPosition() {
+		return initialPosition;
 	}
 	
 	

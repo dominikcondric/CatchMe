@@ -11,10 +11,13 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Disposable;
-import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 
 import ecs.components.AnimationComponent;
+import ecs.components.GuiComponent;
 import ecs.components.LightComponent;
 import ecs.components.PhysicsComponent;
 import ecs.components.PhysicsComponent.Fixture;
@@ -25,15 +28,20 @@ public class RenderingSystem implements Disposable {
 	private SpriteBatch spriteBatch;
 	private OrthogonalTiledMapRenderer mapRenderer;
 	private ShapeRenderer shapeRenderer;
+	private Stage gui;
 	
 	public RenderingSystem() {
 		spriteBatch = new SpriteBatch();
 		mapRenderer = new OrthogonalTiledMapRenderer(null, 1.f / 32.f, spriteBatch);
 		shapeRenderer = new ShapeRenderer();
+		gui = new Stage(new FitViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight()), spriteBatch);
+	}
+	
+	public void clearScreen() {
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_STENCIL_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 	}
 	
 	public void renderEntities(ImmutableArray<SpriteComponent> spriteComponents, ImmutableArray<AnimationComponent> animationComponents, ImmutableArray<LightComponent> lights, TiledMap map, OrthographicCamera camera) {
-		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_STENCIL_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 		spriteBatch.setProjectionMatrix(camera.combined);
 		mapRenderer.setMap(map);
 		mapRenderer.setView(camera);
@@ -61,7 +69,8 @@ public class RenderingSystem implements Disposable {
 			Color lightColor = new Color(Color.GOLD);
 			lightColor.a = 0.2f;
 			shapeRenderer.setColor(lightColor);
-			shapeRenderer.circle(light.getX(), light.getY(), light.getRadius(), 50);
+			Vector2 lightPosition = light.getPosition();
+			shapeRenderer.circle(lightPosition.x, lightPosition.y, light.getRadius(), 50);
 		}
 		Gdx.gl.glBlendFunc(GL20.GL_BLEND_SRC_ALPHA, GL20.GL_DST_ALPHA);
 		Gdx.gl.glStencilFunc(GL20.GL_EQUAL, 0, 0xFF);
@@ -72,6 +81,19 @@ public class RenderingSystem implements Disposable {
 		shapeRenderer.end();
 		Gdx.gl.glDisable(GL20.GL_STENCIL_TEST);
 		Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
+	}
+	
+	public void renderGUI(ImmutableArray<GuiComponent> guiComponents) {
+		if (GuiComponent.stageModified) {
+			gui.clear();
+			for (GuiComponent guiComp  : guiComponents) {
+				gui.addActor(guiComp.getGuiElement());
+			}
+		}
+		
+		gui.getViewport().apply();
+		gui.act();
+		gui.draw();
 	}
 	
 	public void renderColliders(ImmutableArray<PhysicsComponent> physicsComponents, OrthographicCamera camera) {
@@ -86,11 +108,12 @@ public class RenderingSystem implements Disposable {
 		}
 		shapeRenderer.end();
 	}
-
 	
 	@Override
 	public void dispose() {
 		spriteBatch.dispose();
 		mapRenderer.dispose();
+		shapeRenderer.dispose();
+		gui.dispose();
 	}
 }
