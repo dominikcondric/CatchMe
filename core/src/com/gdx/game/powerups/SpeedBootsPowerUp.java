@@ -10,7 +10,7 @@ public class SpeedBootsPowerUp extends PowerUp {
 	}
 
 	@Override
-	public void use(Player player) {
+	protected void takeEffect(Player player) {
 		player.getComponent(PhysicsComponent.class).setMoveMultiplier(10f);
 	}
 

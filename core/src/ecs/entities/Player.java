@@ -1,7 +1,5 @@
 package ecs.entities;
 
-import java.beans.EventSetDescriptor;
-
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -19,6 +17,7 @@ import ecs.components.CollisionCallback;
 import ecs.components.EventComponent;
 import ecs.components.LightComponent;
 import ecs.components.PhysicsComponent;
+import ecs.components.SoundComponent;
 import ecs.components.PhysicsComponent.BodyType;
 import ecs.components.PhysicsComponent.Fixture;
 import patterns.Event;
@@ -33,6 +32,9 @@ public class Player extends Entity {
 	private boolean moving = false;
 	private WalkCommand.Directions lastMovingDirection = null;
 	private PowerUp powerUp = null;
+	private float blockedDuration = 0.f;
+	private boolean inCatchRange = false;
+	private boolean catching = true; 
 
 	public Player(ComponentDatabase componentDB, boolean player1) {
 		super(componentDB);
@@ -97,6 +99,10 @@ public class Player extends Entity {
 				if ((other.collisionResponseFlags & PhysicsComponent.ITEM_FLAG) != 0) {
 					if (powerUp == null)
 						getComponent(EventComponent.class).publishedEvents.add(new Event("PickPowerUp", null));
+				} 
+				
+				if ((other.collisionResponseFlags & PhysicsComponent.PLAYER_FLAG) != 0) {
+					inCatchRange = true;
 				}
 			}
 			
@@ -126,7 +132,10 @@ public class Player extends Entity {
 				if (event.message.contentEquals("CollectPowerUp")) {
 					PowerUp powerup = (PowerUp) event.data;
 					Player.this.powerUp = powerup;
+					getComponent(SoundComponent.class).getSoundEffect("PowerUpPickUp").shouldPlay = true;
 					eventComp.observedEvents.removeValue(event.message, false);
+				} else if (event.message.contentEquals("Caught")) {
+					blockedDuration = 3.f;
 				}
 			}
 
@@ -137,11 +146,20 @@ public class Player extends Entity {
 					eventComp.publishedEvents.removeValue(event, false);
 					eventComp.observedEvents.add("CollectPowerUp");
 				}
+				
+				if (event.message.contentEquals("Caught")) {
+					eventComp.publishedEvents.removeValue(event, false);
+				}
 			}
 		});
 		
-		ec.observedEvents.add("PickPowerUp");
+		ec.observedEvents.add("PickPowerUp", "Caught");
 		addComponent(ec);
+		
+		SoundComponent soundComp = new SoundComponent();
+		soundComp.addSound("Footsteps", Gdx.files.internal("footsteps//step_cloth1.ogg"), false, true);
+		soundComp.addSound("PowerUpPickUp", Gdx.files.internal("8-Bit Sound Library//8-Bit Sound Library//Mp3//Collect_Point_00.mp3"), false, false);
+		addComponent(soundComp);
 	}
 	
 	public PowerUp getPowerUp() {
@@ -150,46 +168,72 @@ public class Player extends Entity {
 	
 	@Override
 	public void update(float deltaTime) {
-		CommandMapper commandMapper = CommandMapper.getInstance();
-		CommandMap walkRightCommand = commandMapper.getCommandKey(getPlayerName() + "WalkRight");
-		CommandMap walkLeftCommand = commandMapper.getCommandKey(getPlayerName() + "WalkLeft");
-		CommandMap walkUpCommand = commandMapper.getCommandKey(getPlayerName() + "WalkUp");
-		CommandMap walkDownCommand = commandMapper.getCommandKey(getPlayerName() + "WalkDown");
-		
 		boolean walking = false;
 		AnimationComponent animationComponent = getComponent(AnimationComponent.class);
+		blockedDuration -= deltaTime;
 		
-		if (Gdx.input.isKeyPressed(walkRightCommand.getKey()) && (lastMovingDirection == Directions.RIGHT || !moving)) {
-			walking = true;
-			lastMovingDirection = Directions.RIGHT;
-			animationComponent.setActiveAnimation("WalkRight");
-			walkRightCommand.getCommand().execute(this, deltaTime);
-		}
-		
-		if (Gdx.input.isKeyPressed(walkLeftCommand.getKey()) && (lastMovingDirection == Directions.LEFT || !moving)) {
-			walking = true;
-			lastMovingDirection = Directions.LEFT;
-			animationComponent.setActiveAnimation("WalkLeft");
-			walkLeftCommand.getCommand().execute(this, deltaTime);
-		}
-		
-		if (Gdx.input.isKeyPressed(walkUpCommand.getKey()) && (lastMovingDirection == Directions.UP || !moving)) {
-			lastMovingDirection = Directions.UP;
-			animationComponent.setActiveAnimation("WalkUp");
-			walking = true;
-			walkUpCommand.getCommand().execute(this, deltaTime);
-		}
-		
-		if (Gdx.input.isKeyPressed(walkDownCommand.getKey()) && (lastMovingDirection == Directions.DOWN || !moving)) {
-			lastMovingDirection = Directions.DOWN;
-			animationComponent.setActiveAnimation("WalkDown");
-			walking = true;
-			walkDownCommand.getCommand().execute(this, deltaTime);
+		if (blockedDuration <= 0.f) {
+			blockedDuration = 0.f;
+			CommandMapper commandMapper = CommandMapper.getInstance();
+			CommandMap walkRightCommand = commandMapper.getCommandKey(getPlayerName() + "WalkRight");
+			CommandMap walkLeftCommand = commandMapper.getCommandKey(getPlayerName() + "WalkLeft");
+			CommandMap walkUpCommand = commandMapper.getCommandKey(getPlayerName() + "WalkUp");
+			CommandMap walkDownCommand = commandMapper.getCommandKey(getPlayerName() + "WalkDown");
+			CommandMap catchCommand = commandMapper.getCommandKey(getPlayerName() + "Catch");
+			
+			
+			if (Gdx.input.isKeyPressed(walkRightCommand.getKey()) && (lastMovingDirection == Directions.RIGHT || !moving)) {
+				walking = true;
+				lastMovingDirection = Directions.RIGHT;
+				animationComponent.setActiveAnimation("WalkRight");
+				walkRightCommand.getCommand().execute(this, deltaTime);
+			}
+			
+			if (Gdx.input.isKeyPressed(walkLeftCommand.getKey()) && (lastMovingDirection == Directions.LEFT || !moving)) {
+				walking = true;
+				lastMovingDirection = Directions.LEFT;
+				animationComponent.setActiveAnimation("WalkLeft");
+				walkLeftCommand.getCommand().execute(this, deltaTime);
+			}
+			
+			if (Gdx.input.isKeyPressed(walkUpCommand.getKey()) && (lastMovingDirection == Directions.UP || !moving)) {
+				lastMovingDirection = Directions.UP;
+				animationComponent.setActiveAnimation("WalkUp");
+				walking = true;
+				walkUpCommand.getCommand().execute(this, deltaTime);
+			}
+			
+			if (Gdx.input.isKeyPressed(walkDownCommand.getKey()) && (lastMovingDirection == Directions.DOWN || !moving)) {
+				lastMovingDirection = Directions.DOWN;
+				animationComponent.setActiveAnimation("WalkDown");
+				walking = true;
+				walkDownCommand.getCommand().execute(this, deltaTime);
+			}
+			
+			if (powerUp != null) {
+				CommandMap powerUpCommand = commandMapper.getCommandKey(playerName + "UsePowerUp");
+				if (Gdx.input.isKeyJustPressed(powerUpCommand.getKey())) {
+					powerUpCommand.getCommand().execute(this, deltaTime);
+				}
+				
+				if (powerUp.isUsed()) {
+					powerUp.update(this, deltaTime);
+					if (powerUp.isFinished()) {
+						powerUp = null;
+					}
+				}
+			}
+			
+			if (Gdx.input.isKeyJustPressed(catchCommand.getKey()) && inCatchRange && catching) {
+				catchCommand.getCommand().execute(this, deltaTime);
+				catching = false;
+			}
 		}
 		
 		if (!walking) {
 			animationComponent.setActiveAnimation(animationComponent.getActiveAnimation().replace("Walk", "Idle"));
 			getComponent(PhysicsComponent.class).setMovingDirection(new Vector2(0.f, 0.f));
+			getComponent(SoundComponent.class).getSoundEffect("Footsteps").shouldPlay = false;
 		}
 		
 		moving = walking;
@@ -202,17 +246,7 @@ public class Player extends Entity {
 		LightComponent lightComponent = getComponent(LightComponent.class);
 		lightComponent.setPosition(worldPosition);
 		
-		if (powerUp != null) {
-			CommandMap powerUpCommand = commandMapper.getCommandKey(playerName + "Interact");
-			if (Gdx.input.isKeyJustPressed(powerUpCommand.getKey())) {
-				powerUpCommand.getCommand().execute(this, deltaTime);
-			}
-			
-			powerUp.update(this, deltaTime);
-			if (powerUp.isFinished()) {
-				powerUp = null;
-			}
-		}
+		inCatchRange = false;
 	}
 
 	public String getPlayerName() {

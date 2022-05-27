@@ -4,15 +4,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Random;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-//import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.gdx.game.powerups.LightPowerUp;
 import com.gdx.game.powerups.PowerUp;
@@ -25,32 +25,34 @@ import ecs.components.EventComponent;
 import ecs.components.GuiComponent;
 import ecs.components.LightComponent;
 import ecs.components.PhysicsComponent;
+import ecs.components.SoundComponent;
 import ecs.components.SpriteComponent;
-import ecs.entities.Counter;
+import ecs.entities.GameStatus;
 import ecs.entities.Item;
 import ecs.entities.Obstacle;
 import ecs.entities.Player;
+import ecs.systems.AudioSystem;
 import ecs.systems.EventSystem;
 import ecs.systems.PhysicsSystem;
 import ecs.systems.RenderingSystem;
 import utility.ImmutableArray;
 import utility.Pair;
 
-public class Gameplay {
+public class Gameplay implements Disposable {
 	private ComponentDatabase componentDatabase;
 	private Array<Obstacle> obstacles;
 	private Array<Item> items;
 	private Array<Pair<Vector2, Boolean>> availableItemPositions;
 	private Player player1;
 	private Player player2;
-	private Counter timeCounter;
+	private GameStatus timeCounter;
 	private TiledMap map;
+	private Music gameplayMusic;
 	private OrthographicCamera camera;
 	private FitViewport viewport;
 	private final int mapWidth, mapHeight;
 	private float timeToNextPowerUp = 0f;
-	private static final float POWERUP_RESPAWN_TIME = 40f;
-	private float matchLength; 
+	private static final float POWERUP_RESPAWN_TIME = 20f;
 	
 	private enum PowerUpItem {
 		SPEED(SpeedBootsPowerUp.class),
@@ -66,7 +68,6 @@ public class Gameplay {
 				return PowerUpItem.values()[new Random().nextInt(PowerUpItem.values().length)].powerUpClass.getConstructor().newInstance();
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
@@ -74,15 +75,18 @@ public class Gameplay {
 		}
 	}
 	
-	public Gameplay(ComponentDatabase componentDatabase, String mapFilePath, float matchLength) {
+	public Gameplay(ComponentDatabase componentDatabase, String mapFilePath, String musicFilePath, float matchLength) {
 		this.componentDatabase = componentDatabase;
-		this.matchLength = matchLength;
 		obstacles = new Array<Obstacle>();
 		items = new Array<Item>();
 		availableItemPositions = new Array<>();
 		player1 = new Player(componentDatabase, true);
 		player2 = new Player(componentDatabase, false);
-		timeCounter = new Counter(componentDatabase, matchLength);
+		timeCounter = new GameStatus(componentDatabase, matchLength);
+		
+		gameplayMusic = Gdx.audio.newMusic(Gdx.files.internal(musicFilePath));
+		gameplayMusic.setLooping(true);
+		gameplayMusic.setVolume(0.2f);
 		map = new TmxMapLoader().load(mapFilePath);
 		mapWidth = map.getProperties().get("width", Integer.class);
 		mapHeight = map.getProperties().get("height", Integer.class);
@@ -209,5 +213,15 @@ public class Gameplay {
 		final float aspectRatio = width / 2.f / height;
 		viewport.setWorldSize(aspectRatio * 15.f, 15.f);
 		viewport.setScreenBounds(0, 0, width / 2, height);
+	}
+
+	public void playAudio(AudioSystem audioSystem) {
+		audioSystem.playAudio(componentDatabase.getComponentArray(SoundComponent.class), gameplayMusic);
+	}
+
+	@Override
+	public void dispose() {
+		gameplayMusic.dispose();
+		map.dispose();
 	}
 }

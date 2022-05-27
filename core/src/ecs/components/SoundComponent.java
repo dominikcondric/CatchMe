@@ -21,6 +21,7 @@ public class SoundComponent implements Component, Disposable {
 		public Sound sound;
 		public boolean shouldPlay;
 		public boolean looped;
+		public boolean playing = false;
 	}
 	
 	public SoundComponent() {

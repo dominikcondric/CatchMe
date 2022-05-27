@@ -10,7 +10,7 @@ public class LightPowerUp extends PowerUp {
 	}
 
 	@Override
-	public void use(Player player) {
+	protected void takeEffect(Player player) {
 		LightComponent lightComp = player.getComponent(LightComponent.class);
 		lightComp.setRadius(lightComp.getRadius() * 3f);
 	}

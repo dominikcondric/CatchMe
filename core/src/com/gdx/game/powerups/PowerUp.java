@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import ecs.entities.Player;
 
 public abstract class PowerUp {
+	private boolean used = false;
 	protected float elapsedTimeToFinish;
 	public final TextureRegion textureRegion;
 	public static final String commonTexture = "Shikashi's Fantasy Icons Pack v2//BG 6.png";
@@ -15,7 +16,12 @@ public abstract class PowerUp {
 		elapsedTimeToFinish = duration;
 	}
 	
-	public abstract void use(Player player);
+	public void use(Player player) {
+		used = true;
+		takeEffect(player);
+	}
+	
+	protected abstract void takeEffect(Player player); 
 	
 	public void update(Player player, float deltaTime) {
 		elapsedTimeToFinish -= deltaTime;
@@ -23,5 +29,9 @@ public abstract class PowerUp {
 	
 	public final boolean isFinished() {
 		return elapsedTimeToFinish <= 0.f;
+	}
+
+	public boolean isUsed() {
+		return used;
 	}
 }

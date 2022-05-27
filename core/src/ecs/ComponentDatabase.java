@@ -1,6 +1,7 @@
 package ecs;
 
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.ObjectMap;
 
 import ecs.components.AnimationComponent;
@@ -9,10 +10,11 @@ import ecs.components.EventComponent;
 import ecs.components.GuiComponent;
 import ecs.components.LightComponent;
 import ecs.components.PhysicsComponent;
+import ecs.components.SoundComponent;
 import ecs.components.SpriteComponent;
 import utility.ImmutableArray;
 
-public class ComponentDatabase {
+public class ComponentDatabase implements Disposable {
 	private ObjectMap<Class<? extends Component>, Array<? extends Component>> database;
 	private static boolean instantiated = false;
 	
@@ -33,6 +35,7 @@ public class ComponentDatabase {
 		database.put(LightComponent.class, new Array<LightComponent>());
 		database.put(EventComponent.class, new Array<EventComponent>());
 		database.put(GuiComponent.class, new Array<GuiComponent>());
+		database.put(SoundComponent.class, new Array<SoundComponent>());
 	}
 	
 	public <T extends Component> void addComponent(T component) {
@@ -51,5 +54,20 @@ public class ComponentDatabase {
 	@SuppressWarnings("unchecked")
 	public <T extends Component> ImmutableArray<T> getComponentArray(Class<T> type) {
 		return new ImmutableArray<T>((Array<T>) database.get(type));
+	}
+
+	@Override
+	public void dispose() {
+		for (SoundComponent soundComp : getComponentArray(SoundComponent.class)) {
+			soundComp.dispose();
+		}
+		
+		for (SpriteComponent spriteComp : getComponentArray(SpriteComponent.class)) {
+			spriteComp.dispose();
+		}
+		
+		for (AnimationComponent animationComp : getComponentArray(AnimationComponent.class)) {
+			animationComp.dispose();
+		}
 	}
 }

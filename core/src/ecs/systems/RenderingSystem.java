@@ -5,7 +5,6 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.maps.tiled.TiledMap;
@@ -65,10 +64,9 @@ public class RenderingSystem implements Disposable {
 		Gdx.gl.glStencilOp(GL20.GL_KEEP, GL20.GL_KEEP, GL20.GL_REPLACE);
 		shapeRenderer.setProjectionMatrix(camera.combined);
 		shapeRenderer.begin(ShapeType.Filled);
+		shapeRenderer.setColor(0.f, 0.f, 0.f, 0.f);
 		for (LightComponent light : lights) {
-			Color lightColor = new Color(Color.GOLD);
-			lightColor.a = 0.2f;
-			shapeRenderer.setColor(lightColor);
+			shapeRenderer.setColor(0.f, 0.f, 0.f, 0.f);
 			Vector2 lightPosition = light.getPosition();
 			shapeRenderer.circle(lightPosition.x, lightPosition.y, light.getRadius(), 50);
 		}
@@ -76,7 +74,7 @@ public class RenderingSystem implements Disposable {
 		Gdx.gl.glStencilFunc(GL20.GL_EQUAL, 0, 0xFF);
 		int mapWidth = map.getProperties().get("width", Integer.class);
 		int mapHeight = map.getProperties().get("height", Integer.class);
-		shapeRenderer.setColor(0f, 0f, 0f, .95f);
+		shapeRenderer.setColor(0f, 0f, 0f, .98f);
 		shapeRenderer.rect(0f, 0.f, mapWidth, mapHeight);
 		shapeRenderer.end();
 		Gdx.gl.glDisable(GL20.GL_STENCIL_TEST);
@@ -115,5 +113,9 @@ public class RenderingSystem implements Disposable {
 		mapRenderer.dispose();
 		shapeRenderer.dispose();
 		gui.dispose();
+	}
+	
+	public void onScreenResize(int width, int height) {
+		gui.getViewport().setScreenSize(width, height);
 	}
 }

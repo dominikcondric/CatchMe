@@ -2,8 +2,9 @@ package ecs.components;
 
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.utils.Disposable;
 
-public class SpriteComponent implements Component {
+public class SpriteComponent implements Component, Disposable {
 	private Sprite sprite;
 	
 	public SpriteComponent(Sprite sprite) {
@@ -20,5 +21,10 @@ public class SpriteComponent implements Component {
 	
 	public void setSprite(Sprite sprite) {
 		this.sprite = sprite;
+	}
+
+	@Override
+	public void dispose() {
+		sprite.getTexture().dispose();
 	}
 }

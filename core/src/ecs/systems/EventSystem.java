@@ -1,9 +1,7 @@
 package ecs.systems;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
-import ecs.components.CollisionCallback;
 import ecs.components.EventComponent;
 import patterns.Event;
 import patterns.EventCallback;
@@ -22,7 +20,7 @@ public class EventSystem {
 		
 		for (EventComponent eventComp : eventComponents) {
 			for (String s : eventComp.observedEvents) {
-				if (publishedEvents.containsKey(s)) {
+				if (publishedEvents.containsKey(s) && eventComp.getObservedCallback() != publishedEvents.get(s).second) {
 					Pair<Event, EventCallback> eventOwner = publishedEvents.get(s);
 					eventComp.getObservedCallback().onEventObserved(eventOwner.first);
 					eventOwner.second.onMyEventObserved(eventOwner.first);

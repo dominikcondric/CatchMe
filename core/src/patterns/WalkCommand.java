@@ -1,11 +1,11 @@
 package patterns;
 
-import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 
 import ecs.Entity;
 import ecs.components.PhysicsComponent;
+import ecs.components.SoundComponent;
+import ecs.components.SoundComponent.SoundEffect;
 
 public class WalkCommand implements Command {
 	public enum Directions {
@@ -13,17 +13,11 @@ public class WalkCommand implements Command {
 	}
 	
 	private Directions direction;
-	private float multiplier;
 
-	public WalkCommand(Directions direction, float multiplier) {
+	public WalkCommand(Directions direction) {
 		this.direction = direction;
-		this.multiplier = multiplier;
 	}
 	
-	public void setMultiplier(float multiplier) {
-		this.multiplier = multiplier;
-	}
-
 	@Override
 	public void execute(Entity entity, float deltaTime) {
 		PhysicsComponent physicsComp = entity.getComponent(PhysicsComponent.class);
@@ -41,5 +35,8 @@ public class WalkCommand implements Command {
 				physicsComp.setMovingDirection(new Vector2(1.f, 0f));
 				break;
 		}
+		
+		SoundEffect walkSoundEffect = entity.getComponent(SoundComponent.class).getSoundEffect("Footsteps");
+		walkSoundEffect.shouldPlay = true;
 	}
 }
