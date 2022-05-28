@@ -74,7 +74,7 @@ public class RenderingSystem implements Disposable {
 		Gdx.gl.glStencilFunc(GL20.GL_EQUAL, 0, 0xFF);
 		int mapWidth = map.getProperties().get("width", Integer.class);
 		int mapHeight = map.getProperties().get("height", Integer.class);
-		shapeRenderer.setColor(0f, 0f, 0f, .98f);
+		shapeRenderer.setColor(0f, 0f, 0f, .99f);
 		shapeRenderer.rect(0f, 0.f, mapWidth, mapHeight);
 		shapeRenderer.end();
 		Gdx.gl.glDisable(GL20.GL_STENCIL_TEST);

@@ -80,8 +80,6 @@ public class Gameplay implements Disposable {
 		obstacles = new Array<Obstacle>();
 		items = new Array<Item>();
 		availableItemPositions = new Array<>();
-		player1 = new Player(componentDatabase, true);
-		player2 = new Player(componentDatabase, false);
 		timeCounter = new TimeCounter(componentDatabase, matchLength);
 		
 		gameplayMusic = Gdx.audio.newMusic(Gdx.files.internal(musicFilePath));
@@ -103,6 +101,9 @@ public class Gameplay implements Disposable {
 				}
 			}
 		}
+		
+		player1 = new Player(componentDatabase, true, availableItemPositions.random().first, "32_Characters//Males//M_04.png");
+		player2 = new Player(componentDatabase, false, availableItemPositions.random().first, "32_Characters//Females//F_11.png");
 		
 		camera = new OrthographicCamera();
 		final float aspectRatio = Gdx.graphics.getWidth() / 2.f / Gdx.graphics.getHeight();

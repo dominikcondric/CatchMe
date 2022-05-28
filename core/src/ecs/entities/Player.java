@@ -45,21 +45,21 @@ public class Player extends Entity {
 	private boolean inCatchRange = false;
 	private boolean catching = true; 
 
-	public Player(ComponentDatabase componentDB, boolean player1) {
+	public Player(ComponentDatabase componentDB, boolean player1, Vector2 playerPosition, String playerTexturePath) {
 		super(componentDB);
 		if (player1)
 			playerName = "P1";
 		else
 			playerName = "P2";
 		
-		createComponents();
+		createComponents(playerPosition, playerTexturePath);
 	}
 	
-	protected void createComponents() {
+	protected void createComponents(Vector2 playerPosition, String playerTexturePath) {
 		/////////////////////////////// Animation component ////////////////////////////////
-		AnimationComponent mcAnimationComp = new AnimationComponent(25.f, 40.f, 1.f, 1.f);
+		AnimationComponent mcAnimationComp = new AnimationComponent(playerPosition.x, playerPosition.y, 1.f, 1.f);
 		Array<TextureRegion> mcAnimationSprites = new Array<>(3);
-		final Texture characterTexture = new Texture("32_Characters//Males//M_01.png");
+		final Texture characterTexture = new Texture(playerTexturePath);
 		TextureRegion[] charactedTextureRegions = new TextureRegion[12];
 		for (int i = 0; i < charactedTextureRegions.length; ++i) {
 			charactedTextureRegions[i] = new TextureRegion(characterTexture, i % 4 * 16, 1 + i / 4 * 17, 16, 16);
