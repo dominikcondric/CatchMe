@@ -27,7 +27,7 @@ import ecs.components.LightComponent;
 import ecs.components.PhysicsComponent;
 import ecs.components.SoundComponent;
 import ecs.components.SpriteComponent;
-import ecs.entities.GameStatus;
+import ecs.entities.TimeCounter;
 import ecs.entities.Item;
 import ecs.entities.Obstacle;
 import ecs.entities.Player;
@@ -45,7 +45,7 @@ public class Gameplay implements Disposable {
 	private Array<Pair<Vector2, Boolean>> availableItemPositions;
 	private Player player1;
 	private Player player2;
-	private GameStatus timeCounter;
+	private TimeCounter timeCounter;
 	private TiledMap map;
 	private Music gameplayMusic;
 	private OrthographicCamera camera;
@@ -82,7 +82,7 @@ public class Gameplay implements Disposable {
 		availableItemPositions = new Array<>();
 		player1 = new Player(componentDatabase, true);
 		player2 = new Player(componentDatabase, false);
-		timeCounter = new GameStatus(componentDatabase, matchLength);
+		timeCounter = new TimeCounter(componentDatabase, matchLength);
 		
 		gameplayMusic = Gdx.audio.newMusic(Gdx.files.internal(musicFilePath));
 		gameplayMusic.setLooping(true);

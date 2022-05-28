@@ -69,5 +69,10 @@ public class ComponentDatabase implements Disposable {
 		for (AnimationComponent animationComp : getComponentArray(AnimationComponent.class)) {
 			animationComp.dispose();
 		}
+		
+		for (GuiComponent guiComp : getComponentArray(GuiComponent.class)) {
+			guiComp.dispose();
+		}
+		
 	}
 }

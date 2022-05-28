@@ -12,14 +12,16 @@ public class AudioSystem {
 		for (SoundComponent soundComp : soundComponents) {
 			for (SoundEffect soundEffect : soundComp.getSoundEffects()) {
 				if (soundEffect.shouldPlay && !soundEffect.playing) {
-					soundEffect.playing = true;
 					
-					if (soundEffect.looped)
+					if (soundEffect.looped) {
+						soundEffect.playing = true;
 						soundEffect.sound.loop();
-					else
+					} else {
 						soundEffect.sound.play();
+						soundEffect.shouldPlay = false;
+					}
 					
-				} else if (!soundEffect.shouldPlay && soundEffect.playing) {
+				} else if (!soundEffect.shouldPlay && soundEffect.playing && soundEffect.looped) {
 					soundEffect.playing = false;
 					soundEffect.sound.stop();
 				}

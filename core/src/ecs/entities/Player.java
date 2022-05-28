@@ -1,12 +1,19 @@
 package ecs.entities;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Group;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Label.LabelStyle;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.gdx.game.powerups.PowerUp;
 
@@ -15,6 +22,7 @@ import ecs.Entity;
 import ecs.components.AnimationComponent;
 import ecs.components.CollisionCallback;
 import ecs.components.EventComponent;
+import ecs.components.GuiComponent;
 import ecs.components.LightComponent;
 import ecs.components.PhysicsComponent;
 import ecs.components.SoundComponent;
@@ -24,6 +32,7 @@ import patterns.Event;
 import patterns.EventCallback;
 import patterns.WalkCommand;
 import patterns.WalkCommand.Directions;
+import screens.GameScreen;
 import utility.CommandMapper;
 import utility.CommandMapper.CommandMap;
 
@@ -47,6 +56,7 @@ public class Player extends Entity {
 	}
 	
 	protected void createComponents() {
+		/////////////////////////////// Animation component ////////////////////////////////
 		AnimationComponent mcAnimationComp = new AnimationComponent(25.f, 40.f, 1.f, 1.f);
 		Array<TextureRegion> mcAnimationSprites = new Array<>(3);
 		final Texture characterTexture = new Texture("32_Characters//Males//M_01.png");
@@ -91,6 +101,7 @@ public class Player extends Entity {
 		mcAnimationSprites.clear();
 		addComponent(mcAnimationComp);
 		
+		/////////////////////////////// Physics component ////////////////////////////////
 		Rectangle boundingRectangle = mcAnimationComp.getCurrentSprite().getBoundingRectangle();
 		PhysicsComponent playerPhysicsComp = new PhysicsComponent(boundingRectangle.getCenter(new Vector2()), new CollisionCallback() {
 			
@@ -123,7 +134,11 @@ public class Player extends Entity {
 		addComponent(playerPhysicsComp);
 		
 		Vector2 worldPosition = playerPhysicsComp.getWorldPosition();
+		
+		/////////////////////////////// Lightcomponent ////////////////////////////////
 		addComponent(new LightComponent(worldPosition.x, worldPosition.y, 2.f, .5f));
+		
+		/////////////////////////////// Event component ////////////////////////////////
 		EventComponent ec = new EventComponent(new EventCallback() {
 			
 			@Override
@@ -133,9 +148,16 @@ public class Player extends Entity {
 					PowerUp powerup = (PowerUp) event.data;
 					Player.this.powerUp = powerup;
 					getComponent(SoundComponent.class).getSoundEffect("PowerUpPickUp").shouldPlay = true;
+					Image powerUpImage = (Image) ((Group)getComponent(GuiComponent.class).getGuiElement()).getChild(1);
+					powerUpImage.setDrawable(new TextureRegionDrawable(powerup.textureRegion));
 					eventComp.observedEvents.removeValue(event.message, false);
 				} else if (event.message.contentEquals("Caught")) {
 					blockedDuration = 3.f;
+					catching = true;
+					getComponent(SoundComponent.class).getSoundEffect("Caught").shouldPlay = true; 
+					Label label = ((Label) ((Group) getComponent(GuiComponent.class).getGuiElement()).getChild(0));
+					label.setColor(Color.ORANGE);
+					label.setText("Catching");
 				}
 			}
 
@@ -149,6 +171,9 @@ public class Player extends Entity {
 				
 				if (event.message.contentEquals("Caught")) {
 					eventComp.publishedEvents.removeValue(event, false);
+					Label label = ((Label) ((Group) getComponent(GuiComponent.class).getGuiElement()).getChild(0));
+					label.setColor(Color.GREEN);
+					label.setText("Fleeing");
 				}
 			}
 		});
@@ -156,10 +181,38 @@ public class Player extends Entity {
 		ec.observedEvents.add("PickPowerUp", "Caught");
 		addComponent(ec);
 		
+		/////////////////////////////// Sound component ////////////////////////////////
 		SoundComponent soundComp = new SoundComponent();
 		soundComp.addSound("Footsteps", Gdx.files.internal("footsteps//step_cloth1.ogg"), false, true);
-		soundComp.addSound("PowerUpPickUp", Gdx.files.internal("8-Bit Sound Library//8-Bit Sound Library//Mp3//Collect_Point_00.mp3"), false, false);
+		soundComp.addSound("PowerUpPickUp", Gdx.files.internal("8-Bit Sound Library//8-Bit Sound Library//Mp3//Collect_Point_01.mp3"), false, false);
+		soundComp.addSound("Caught", Gdx.files.internal("8-Bit Sound Library//8-Bit Sound Library//Mp3//Collect_Point_00.mp3"), false, false);
 		addComponent(soundComp);
+		
+		/////////////////////////////// Gui component ////////////////////////////////
+		Group group = new Group();
+		group.setSize(Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight() / 8.f);
+		
+		if (playerName.equals("P1"))
+			group.setPosition(0.f, Gdx.graphics.getHeight() * 7f/8f);
+		else 
+			group.setPosition(group.getWidth(), Gdx.graphics.getHeight() * 7f/8f);
+		
+		Label catchingLabel = new Label("Catching", new LabelStyle(GameScreen.font, Color.ORANGE));
+		catchingLabel.setSize(group.getWidth() / 4.f, group.getHeight());
+		catchingLabel.setPosition(group.getWidth() / 2.f - catchingLabel.getWidth() / 2.f, 0f);
+		catchingLabel.setAlignment(Align.center);
+		catchingLabel.setFontScale(2.f);
+		group.addActor(catchingLabel);
+		
+		Image powerUpImage = new Image();
+		powerUpImage.setSize(group.getHeight() / 2.f, group.getHeight() / 2.f);
+		if (playerName.equals("P1"))
+			powerUpImage.setPosition(group.getHeight() / 4.f, group.getHeight() / 4.f);
+		else 
+			powerUpImage.setPosition(group.getWidth() - group.getHeight(), group.getHeight() / 2f);
+		group.addActor(powerUpImage);
+		
+		addComponent(new GuiComponent(group));
 	}
 	
 	public PowerUp getPowerUp() {
