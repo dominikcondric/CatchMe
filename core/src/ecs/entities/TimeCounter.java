@@ -2,16 +2,15 @@ package ecs.entities;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Label.LabelStyle;
 import com.badlogic.gdx.utils.Align;
+import com.gdx.game.CatchMe;
 
 import ecs.ComponentDatabase;
 import ecs.Entity;
 import ecs.components.GuiComponent;
 import ecs.components.SoundComponent;
-import screens.GameScreen;
 
 public class TimeCounter extends Entity {
 	private float remainingTime;
@@ -23,7 +22,7 @@ public class TimeCounter extends Entity {
 	}
 	
 	private void createComponents() {
-		LabelStyle labelStyle = new LabelStyle(GameScreen.font, Color.WHITE);
+		LabelStyle labelStyle = new LabelStyle(CatchMe.font, Color.WHITE);
 		Label counterLabel = new Label(String.valueOf((int) remainingTime), labelStyle);
 		counterLabel.setFontScale(3f);
 		counterLabel.setAlignment(Align.center);

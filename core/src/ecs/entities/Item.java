@@ -58,6 +58,7 @@ public class Item extends Entity {
 			@Override
 			public void onEventObserved(Event event) {
 				if (event.message.contentEquals("PickPowerUp") && inCollision) {
+					System.out.println("aa");
 					EventComponent eventComponent = getComponent(EventComponent.class);
 					eventComponent.publishedEvents.add(new Event("CollectPowerUp", Item.this.powerup));
 					eventComponent.observedEvents.removeValue(event.message, false);
@@ -88,7 +89,4 @@ public class Item extends Entity {
 	public Vector2 getInitialPosition() {
 		return initialPosition;
 	}
-	
-	
-	
 }

@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Random;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
@@ -12,8 +13,7 @@ import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.Disposable;
-import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import com.gdx.game.powerups.LightPowerUp;
 import com.gdx.game.powerups.PowerUp;
 import com.gdx.game.powerups.SpeedBootsPowerUp;
@@ -32,13 +32,17 @@ import ecs.entities.Item;
 import ecs.entities.Obstacle;
 import ecs.entities.Player;
 import ecs.systems.AudioSystem;
-import ecs.systems.EventSystem;
 import ecs.systems.PhysicsSystem;
 import ecs.systems.RenderingSystem;
+import patterns.commands.CatchCommand;
+import patterns.commands.UsePowerupCommand;
+import patterns.commands.WalkCommand;
+import utility.CommandMapper;
 import utility.ImmutableArray;
 import utility.Pair;
+import utility.Toolbox;
 
-public class Gameplay implements Disposable {
+public class GameplayPhase extends GamePhase {
 	private ComponentDatabase componentDatabase;
 	private Array<Obstacle> obstacles;
 	private Array<Item> items;
@@ -46,10 +50,8 @@ public class Gameplay implements Disposable {
 	private Player player1;
 	private Player player2;
 	private TimeCounter timeCounter;
-	private TiledMap map;
 	private Music gameplayMusic;
-	private OrthographicCamera camera;
-	private FitViewport viewport;
+	private TiledMap map;
 	private final int mapWidth, mapHeight;
 	private float timeToNextPowerUp = 0f;
 	private static final float POWERUP_RESPAWN_TIME = 20f;
@@ -75,17 +77,17 @@ public class Gameplay implements Disposable {
 		}
 	}
 	
-	public Gameplay(ComponentDatabase componentDatabase, String mapFilePath, String musicFilePath, float matchLength) {
-		this.componentDatabase = componentDatabase;
+	public GameplayPhase(String player1TexPath, String player2TexPath, float matchLength) {
+		this.componentDatabase = new ComponentDatabase();
 		obstacles = new Array<Obstacle>();
 		items = new Array<Item>();
 		availableItemPositions = new Array<>();
 		timeCounter = new TimeCounter(componentDatabase, matchLength);
+		map = new TmxMapLoader().load("Maps//Map.tmx");
 		
-		gameplayMusic = Gdx.audio.newMusic(Gdx.files.internal(musicFilePath));
+		gameplayMusic = Gdx.audio.newMusic(Gdx.files.internal("Red Curtain.ogg"));
 		gameplayMusic.setLooping(true);
 		gameplayMusic.setVolume(0.2f);
-		map = new TmxMapLoader().load(mapFilePath);
 		mapWidth = map.getProperties().get("width", Integer.class);
 		mapHeight = map.getProperties().get("height", Integer.class);
 		
@@ -102,23 +104,36 @@ public class Gameplay implements Disposable {
 			}
 		}
 		
-		player1 = new Player(componentDatabase, true, availableItemPositions.random().first, "32_Characters//Males//M_04.png");
-		player2 = new Player(componentDatabase, false, availableItemPositions.random().first, "32_Characters//Females//F_11.png");
-		
-		camera = new OrthographicCamera();
-		final float aspectRatio = Gdx.graphics.getWidth() / 2.f / Gdx.graphics.getHeight();
-		viewport = new FitViewport(aspectRatio * 15.f, 15.f, camera);
-		viewport.setScreenBounds(0, 0, Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight());
-		
-		camera.position.x = player1.getComponent(AnimationComponent.class).getCurrentSprite().getOriginX();
-		camera.position.y = player1.getComponent(AnimationComponent.class).getCurrentSprite().getOriginY();
-		camera.update();
+		player1 = new Player(componentDatabase, true, availableItemPositions.random().first, player1TexPath);
+		player2 = new Player(componentDatabase, false, availableItemPositions.random().first, player2TexPath);
 	}
 	
-	public void update(EventSystem eventSystem, float deltaTime) {
-		// Check events
-		eventSystem.checkEvents(componentDatabase.getComponentArray(EventComponent.class));
+	public void setCommands(CommandMapper commandMapper) {
+		commandMapper.addCommand(Keys.D, new WalkCommand(player1, WalkCommand.Directions.RIGHT, false)); 
+		commandMapper.addCommand(Keys.A, new WalkCommand(player1, WalkCommand.Directions.LEFT, false)); 
+		commandMapper.addCommand(Keys.W, new WalkCommand(player1, WalkCommand.Directions.UP, false)); 
+		commandMapper.addCommand(Keys.S, new WalkCommand(player1, WalkCommand.Directions.DOWN, false));
+		commandMapper.addCommand(Keys.SPACE, new CatchCommand(player1, true));
+		commandMapper.addCommand(Keys.SHIFT_LEFT, new UsePowerupCommand(player1, true));
 		
+		commandMapper.addCommand(Keys.RIGHT, new WalkCommand(player2, WalkCommand.Directions.RIGHT, false)); 
+		commandMapper.addCommand(Keys.LEFT, new WalkCommand(player2, WalkCommand.Directions.LEFT, false)); 
+		commandMapper.addCommand(Keys.UP, new WalkCommand(player2, WalkCommand.Directions.UP, false)); 
+		commandMapper.addCommand(Keys.DOWN, new WalkCommand(player2, WalkCommand.Directions.DOWN, false));
+		commandMapper.addCommand(Keys.ENTER, new CatchCommand(player2, true));
+		commandMapper.addCommand(Keys.SHIFT_RIGHT, new UsePowerupCommand(player2, true));
+	}
+	
+	@Override
+	public void run(Toolbox toolbox, Viewport viewport, float deltaTime) {
+		checkCollisions(toolbox.getPhysicsSystem(), deltaTime);
+		toolbox.getEventSystem().checkEvents(componentDatabase.getComponentArray(EventComponent.class));
+		playAudio(toolbox.getAudioSystem());
+		draw(toolbox.getRenderingSystem(), map, viewport);
+	}
+	
+	@Override
+	public void update(float deltaTime) {
 		// Update players
 		player1.update(deltaTime);
 		player2.update(deltaTime);
@@ -170,7 +185,7 @@ public class Gameplay implements Disposable {
 		}
 	}
 	
-	private void updateCameraPosition(Entity entityToFollow) {
+	private void updateCameraPosition(Entity entityToFollow, OrthographicCamera camera) {
 		Vector2 entityPosition = entityToFollow.getComponent(PhysicsComponent.class).getWorldPosition();
 		camera.position.set(entityPosition, camera.position.z);
 		
@@ -179,8 +194,9 @@ public class Gameplay implements Disposable {
 		camera.update();
 	}
 	
-	public void draw(RenderingSystem renderingSystem) {
-		// Entity rendering
+	public void draw(RenderingSystem renderingSystem, TiledMap map, Viewport viewport) {
+		// Player1
+		OrthographicCamera camera = (OrthographicCamera) viewport.getCamera();
 		renderingSystem.clearScreen();
 		viewport.setScreenX(0);
 		viewport.apply();
@@ -189,16 +205,22 @@ public class Gameplay implements Disposable {
 		float player1LightRadius = player1LightComp.getRadius();
 		float player2LightRadius = player2LightComp.getRadius();
 		player2LightComp.setRadius(0.f);
-		updateCameraPosition(player1);
+		updateCameraPosition(player1, camera);
+		renderingSystem.renderMap(map, camera);
 		renderingSystem.renderEntities(componentDatabase.getComponentArray(SpriteComponent.class),
-					componentDatabase.getComponentArray(AnimationComponent.class), componentDatabase.getComponentArray(LightComponent.class), map, camera);
+					componentDatabase.getComponentArray(AnimationComponent.class), camera);
+		renderingSystem.renderLights(componentDatabase.getComponentArray(LightComponent.class), camera, mapWidth, mapHeight);
+		
+//		 Player2
 		player1LightComp.setRadius(0.f);
 		player2LightComp.setRadius(player2LightRadius);
-		updateCameraPosition(player2);
+		updateCameraPosition(player2, camera);
 		viewport.setScreenX(viewport.getScreenWidth());
 		viewport.apply();
+		renderingSystem.renderMap(map, camera);
 		renderingSystem.renderEntities(componentDatabase.getComponentArray(SpriteComponent.class),
-				componentDatabase.getComponentArray(AnimationComponent.class), componentDatabase.getComponentArray(LightComponent.class), map, camera);
+				componentDatabase.getComponentArray(AnimationComponent.class), camera);
+		renderingSystem.renderLights(componentDatabase.getComponentArray(LightComponent.class), camera, mapWidth, mapHeight);
 		player1LightComp.setRadius(player1LightRadius);
 		
 		// Gui rendering
@@ -210,12 +232,6 @@ public class Gameplay implements Disposable {
 		physicsSystem.resolveCollisions(physicsComponents, deltaTime, 100f, 100.f);
 	}
 	
-	public void onScreenResize(int width, int height) {
-		final float aspectRatio = width / 2.f / height;
-		viewport.setWorldSize(aspectRatio * 15.f, 15.f);
-		viewport.setScreenBounds(0, 0, width / 2, height);
-	}
-
 	public void playAudio(AudioSystem audioSystem) {
 		audioSystem.playAudio(componentDatabase.getComponentArray(SoundComponent.class), gameplayMusic);
 	}
@@ -223,6 +239,16 @@ public class Gameplay implements Disposable {
 	@Override
 	public void dispose() {
 		gameplayMusic.dispose();
-		map.dispose();
+		componentDatabase.dispose();
+	}
+
+	@Override
+	public boolean isFinished() {
+		return false;
+	}
+
+	@Override
+	public GamePhase getNewGamePhase() {
+		return null;
 	}
 }

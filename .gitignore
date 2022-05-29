@@ -118,3 +118,5 @@ Thumbs.db
 /assets/*
 !/assets/Maps
 !/assets/AssetSources.md
+!/assets/RightArrow.png
+!/assets/LeftArrow.png

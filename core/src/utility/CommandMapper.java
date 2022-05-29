@@ -1,46 +1,43 @@
 package utility;
 
-import com.badlogic.gdx.utils.OrderedMap;
-import patterns.Command;
+import com.badlogic.gdx.utils.ObjectMap.Entries;
+import com.badlogic.gdx.utils.ObjectMap.Entry;
 
-public class CommandMapper {
-	private static CommandMapper instance;
-	private OrderedMap<String, CommandMap> commands;
+import patterns.commands.Command;
+
+import com.badlogic.gdx.utils.OrderedMap;
+
+public class CommandMapper implements Iterable<Entry<Integer, Command>> {
+	private OrderedMap<Integer, Command> commands;
+	private static boolean instantiated = false;
 	
  	private CommandMapper() {
- 		commands = new OrderedMap<String, CommandMap>(2);
+ 		commands = new OrderedMap<Integer, Command>(10);
  	}
  	
- 	public class CommandMap {
- 		public CommandMap(Integer key, Command command) {
-			this.key = key;
-			this.command = command;
+	public static CommandMapper create() {
+		if (!instantiated) {
+			instantiated = true;
+			return new CommandMapper();
 		}
- 		
-		private Integer key;
- 		private Command command;
- 		
- 		public Integer getKey() { return key; }
- 		public Command getCommand() { return command; }
- 	}
- 	
-	
-	public static CommandMapper getInstance() {
-		if (instance == null)
-			instance = new CommandMapper();
 		
-		return instance;
+		return null;
 	}
 	
-	public void addCommand(String commandName, Command command, Integer key) {
-		commands.put(commandName, new CommandMap(key, command));
+	public void addCommand(Integer key, Command command) {
+		commands.put(key, command);
 	}
 	
-	public void removeCommand(String commandName) {
-		commands.remove(commandName);
+	public void removeAllCommands() {
+		commands.clear();
 	}
 	
-	public CommandMap getCommandKey(String commandName) {
-		return commands.get(commandName);
+	public void removeCommand(Integer key) {
+		commands.remove(key);
+	}
+	
+	@Override
+	public Entries<Integer, Command> iterator() {
+		return commands.iterator();
 	}
 }

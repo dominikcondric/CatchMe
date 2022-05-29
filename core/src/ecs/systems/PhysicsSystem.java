@@ -8,7 +8,6 @@ import ecs.components.CollisionCallback;
 import ecs.components.PhysicsComponent;
 import ecs.components.PhysicsComponent.Fixture;
 import utility.ImmutableArray;
-import utility.Pair;
 import utility.QuadTree;
 import utility.QuadTree.Node;
 

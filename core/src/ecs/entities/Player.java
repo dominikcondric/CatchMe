@@ -15,6 +15,7 @@ import com.badlogic.gdx.graphics.g2d.Animation.PlayMode;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
+import com.gdx.game.CatchMe;
 import com.gdx.game.powerups.PowerUp;
 
 import ecs.ComponentDatabase;
@@ -30,11 +31,8 @@ import ecs.components.PhysicsComponent.BodyType;
 import ecs.components.PhysicsComponent.Fixture;
 import patterns.Event;
 import patterns.EventCallback;
-import patterns.WalkCommand;
-import patterns.WalkCommand.Directions;
-import screens.GameScreen;
-import utility.CommandMapper;
-import utility.CommandMapper.CommandMap;
+import patterns.commands.WalkCommand;
+import patterns.commands.WalkCommand.Directions;
 
 public class Player extends Entity {
 	private String playerName;
@@ -197,7 +195,7 @@ public class Player extends Entity {
 		else 
 			group.setPosition(group.getWidth(), Gdx.graphics.getHeight() * 7f/8f);
 		
-		Label catchingLabel = new Label("Catching", new LabelStyle(GameScreen.font, Color.ORANGE));
+		Label catchingLabel = new Label("Catching", new LabelStyle(CatchMe.font, Color.ORANGE));
 		catchingLabel.setSize(group.getWidth() / 4.f, group.getHeight());
 		catchingLabel.setPosition(group.getWidth() / 2.f - catchingLabel.getWidth() / 2.f, 0f);
 		catchingLabel.setAlignment(Align.center);
@@ -219,78 +217,71 @@ public class Player extends Entity {
 		return powerUp;
 	}
 	
+	public void walk(Directions direction) {
+		if (blockedDuration <= 0.f && (direction == lastMovingDirection || !moving)) {
+			PhysicsComponent physicsComp = getComponent(PhysicsComponent.class);
+			String walkAnimationName = null;
+			switch (direction) {
+				case UP:
+					physicsComp.setMovingDirection(new Vector2(0.f, 1.f));
+					walkAnimationName = "WalkUp";
+					break;
+				case DOWN:
+					physicsComp.setMovingDirection(new Vector2(0.f, -1.f));
+					walkAnimationName = "WalkDown";
+					break;
+				case LEFT:
+					physicsComp.setMovingDirection(new Vector2(-1.f, 0f));
+					walkAnimationName = "WalkLeft";
+					break;
+				case RIGHT:
+					physicsComp.setMovingDirection(new Vector2(1.f, 0f));
+					walkAnimationName = "WalkRight";
+					break;
+			}
+			
+			moving = true;
+			lastMovingDirection = direction;
+			getComponent(AnimationComponent.class).setActiveAnimation(walkAnimationName);
+			getComponent(SoundComponent.class).getSoundEffect("Footsteps").shouldPlay = true;
+		}
+	}
+	
+	public void usePowerUp() {
+		if (powerUp != null && !powerUp.isUsed())
+			powerUp.use(this);
+	}
+	
+	public void performCatch() {
+		if (inCatchRange && catching) {
+			getComponent(EventComponent.class).publishedEvents.add(new Event("Caught", playerName));
+			catching = false;
+		}
+	}
+	
 	@Override
 	public void update(float deltaTime) {
-		boolean walking = false;
 		AnimationComponent animationComponent = getComponent(AnimationComponent.class);
-		blockedDuration -= deltaTime;
-		
-		if (blockedDuration <= 0.f) {
-			blockedDuration = 0.f;
-			CommandMapper commandMapper = CommandMapper.getInstance();
-			CommandMap walkRightCommand = commandMapper.getCommandKey(getPlayerName() + "WalkRight");
-			CommandMap walkLeftCommand = commandMapper.getCommandKey(getPlayerName() + "WalkLeft");
-			CommandMap walkUpCommand = commandMapper.getCommandKey(getPlayerName() + "WalkUp");
-			CommandMap walkDownCommand = commandMapper.getCommandKey(getPlayerName() + "WalkDown");
-			CommandMap catchCommand = commandMapper.getCommandKey(getPlayerName() + "Catch");
+		if (blockedDuration > 0.f)
+			blockedDuration -= deltaTime;
 			
-			
-			if (Gdx.input.isKeyPressed(walkRightCommand.getKey()) && (lastMovingDirection == Directions.RIGHT || !moving)) {
-				walking = true;
-				lastMovingDirection = Directions.RIGHT;
-				animationComponent.setActiveAnimation("WalkRight");
-				walkRightCommand.getCommand().execute(this, deltaTime);
-			}
-			
-			if (Gdx.input.isKeyPressed(walkLeftCommand.getKey()) && (lastMovingDirection == Directions.LEFT || !moving)) {
-				walking = true;
-				lastMovingDirection = Directions.LEFT;
-				animationComponent.setActiveAnimation("WalkLeft");
-				walkLeftCommand.getCommand().execute(this, deltaTime);
-			}
-			
-			if (Gdx.input.isKeyPressed(walkUpCommand.getKey()) && (lastMovingDirection == Directions.UP || !moving)) {
-				lastMovingDirection = Directions.UP;
-				animationComponent.setActiveAnimation("WalkUp");
-				walking = true;
-				walkUpCommand.getCommand().execute(this, deltaTime);
-			}
-			
-			if (Gdx.input.isKeyPressed(walkDownCommand.getKey()) && (lastMovingDirection == Directions.DOWN || !moving)) {
-				lastMovingDirection = Directions.DOWN;
-				animationComponent.setActiveAnimation("WalkDown");
-				walking = true;
-				walkDownCommand.getCommand().execute(this, deltaTime);
-			}
-			
-			if (powerUp != null) {
-				CommandMap powerUpCommand = commandMapper.getCommandKey(playerName + "UsePowerUp");
-				if (Gdx.input.isKeyJustPressed(powerUpCommand.getKey())) {
-					powerUpCommand.getCommand().execute(this, deltaTime);
-				}
 				
-				if (powerUp.isUsed()) {
-					powerUp.update(this, deltaTime);
-					if (powerUp.isFinished()) {
-						powerUp = null;
-					}
-				}
-			}
-			
-			if (Gdx.input.isKeyJustPressed(catchCommand.getKey()) && inCatchRange && catching) {
-				catchCommand.getCommand().execute(this, deltaTime);
-				catching = false;
+		if (powerUp != null && powerUp.isUsed()) {
+			powerUp.update(this, deltaTime);
+			if (powerUp.isFinished()) {
+				powerUp = null;
+				((Image)((Group) getComponent(GuiComponent.class).getGuiElement()).getChild(1)).setDrawable(null);
 			}
 		}
 		
-		if (!walking) {
-			animationComponent.setActiveAnimation(animationComponent.getActiveAnimation().replace("Walk", "Idle"));
+		if (!moving) {
+			getComponent(AnimationComponent.class).setActiveAnimation(animationComponent.getActiveAnimation().replace("Walk", "Idle"));
 			getComponent(PhysicsComponent.class).setMovingDirection(new Vector2(0.f, 0.f));
 			getComponent(SoundComponent.class).getSoundEffect("Footsteps").shouldPlay = false;
 		}
 		
-		moving = walking;
-
+		moving = false;
+		
 		Sprite sprite = animationComponent.getCurrentSprite();
 		Vector2 worldPosition = getComponent(PhysicsComponent.class).getWorldPosition();
 		sprite.setX(worldPosition.x - sprite.getWidth() / 2f);

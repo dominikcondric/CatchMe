@@ -16,18 +16,8 @@ import utility.ImmutableArray;
 
 public class ComponentDatabase implements Disposable {
 	private ObjectMap<Class<? extends Component>, Array<? extends Component>> database;
-	private static boolean instantiated = false;
 	
-	public static ComponentDatabase create() {
-		if (!instantiated) {
-			instantiated = true;
-			return new ComponentDatabase();
-		}
-		
-		return null;
-	}
-	
-	private ComponentDatabase() {
+	public ComponentDatabase() {
 		database = new ObjectMap<>();
 		database.put(SpriteComponent.class, new Array<SpriteComponent>());
 		database.put(PhysicsComponent.class, new Array<PhysicsComponent>());

@@ -8,7 +8,9 @@ import utility.ImmutableArray;
 
 public class AudioSystem {
 	public void playAudio(ImmutableArray<SoundComponent> soundComponents, Music gameplayMusic) {
-		gameplayMusic.play();
+		if (gameplayMusic != null)
+			gameplayMusic.play();
+		
 		for (SoundComponent soundComp : soundComponents) {
 			for (SoundEffect soundEffect : soundComp.getSoundEffects()) {
 				if (soundEffect.shouldPlay && !soundEffect.playing) {

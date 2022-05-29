@@ -9,8 +9,6 @@ public class Pair<T1, T2> {
 	public Pair(T1 first, T2 second) {
 		this.first = first;
 		this.second = second;
-		
-		
 	}
 
 	@Override
@@ -26,7 +24,8 @@ public class Pair<T1, T2> {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Pair other = (Pair) obj;
+		@SuppressWarnings("unchecked")
+		Pair<T1, T2> other = (Pair<T1, T2>) obj;
 		return Objects.equals(first, other.first) && Objects.equals(second, other.second);
 	}
 

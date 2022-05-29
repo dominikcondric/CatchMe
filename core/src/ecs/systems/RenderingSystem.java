@@ -40,11 +40,14 @@ public class RenderingSystem implements Disposable {
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_STENCIL_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 	}
 	
-	public void renderEntities(ImmutableArray<SpriteComponent> spriteComponents, ImmutableArray<AnimationComponent> animationComponents, ImmutableArray<LightComponent> lights, TiledMap map, OrthographicCamera camera) {
-		spriteBatch.setProjectionMatrix(camera.combined);
+	public void renderMap(TiledMap map, OrthographicCamera camera) {
 		mapRenderer.setMap(map);
 		mapRenderer.setView(camera);
 		mapRenderer.render();
+	}
+	
+	public void renderEntities(ImmutableArray<SpriteComponent> spriteComponents, ImmutableArray<AnimationComponent> animationComponents, OrthographicCamera camera) {
+		spriteBatch.setProjectionMatrix(camera.combined);
 		spriteBatch.begin();
 		for (SpriteComponent renderingComp : spriteComponents) {
 			renderingComp.getSprite().draw(spriteBatch);
@@ -54,7 +57,22 @@ public class RenderingSystem implements Disposable {
 			animationComp.getCurrentSprite().draw(spriteBatch);
 		}
 		spriteBatch.end();
+	}
+	
+	public void renderGUI(ImmutableArray<GuiComponent> guiComponents) {
+		if (GuiComponent.stageModified) {
+			gui.clear();
+			for (GuiComponent guiComp  : guiComponents) {
+				gui.addActor(guiComp.getGuiElement());
+			}
+		}
 		
+		gui.getViewport().apply();
+		gui.act();
+		gui.draw();
+	}
+	
+	public void renderLights(ImmutableArray<LightComponent> lights, OrthographicCamera camera, float mapWidth, float mapHeight) {
 		Gdx.gl.glEnable(GL20.GL_BLEND);
 		Gdx.gl.glBlendFunc(GL20.GL_BLEND_SRC_ALPHA, GL20.GL_DST_ALPHA);
 		Gdx.gl.glEnable(GL20.GL_STENCIL_TEST);
@@ -72,26 +90,11 @@ public class RenderingSystem implements Disposable {
 		}
 		Gdx.gl.glBlendFunc(GL20.GL_BLEND_SRC_ALPHA, GL20.GL_DST_ALPHA);
 		Gdx.gl.glStencilFunc(GL20.GL_EQUAL, 0, 0xFF);
-		int mapWidth = map.getProperties().get("width", Integer.class);
-		int mapHeight = map.getProperties().get("height", Integer.class);
 		shapeRenderer.setColor(0f, 0f, 0f, .99f);
 		shapeRenderer.rect(0f, 0.f, mapWidth, mapHeight);
 		shapeRenderer.end();
 		Gdx.gl.glDisable(GL20.GL_STENCIL_TEST);
 		Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
-	}
-	
-	public void renderGUI(ImmutableArray<GuiComponent> guiComponents) {
-		if (GuiComponent.stageModified) {
-			gui.clear();
-			for (GuiComponent guiComp  : guiComponents) {
-				gui.addActor(guiComp.getGuiElement());
-			}
-		}
-		
-		gui.getViewport().apply();
-		gui.act();
-		gui.draw();
 	}
 	
 	public void renderColliders(ImmutableArray<PhysicsComponent> physicsComponents, OrthographicCamera camera) {
