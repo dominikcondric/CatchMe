@@ -29,6 +29,7 @@ import ecs.components.PhysicsComponent;
 import ecs.components.SoundComponent;
 import ecs.components.PhysicsComponent.BodyType;
 import ecs.components.PhysicsComponent.Fixture;
+import ecs.systems.RenderingSystem;
 import patterns.Event;
 import patterns.EventCallback;
 import patterns.commands.WalkCommand;
@@ -42,6 +43,7 @@ public class Player extends Entity {
 	private float blockedDuration = 0.f;
 	private boolean inCatchRange = false;
 	private boolean catching = true; 
+	private boolean pickupTriggered = false;
 
 	public Player(ComponentDatabase componentDB, boolean player1, Vector2 playerPosition, String playerTexturePath) {
 		super(componentDB);
@@ -106,8 +108,10 @@ public class Player extends Entity {
 			@Override
 			public void onCollision(Fixture other) {
 				if ((other.collisionResponseFlags & PhysicsComponent.ITEM_FLAG) != 0) {
-					if (powerUp == null)
-						getComponent(EventComponent.class).publishedEvents.add(new Event("PickPowerUp", null));
+					if (powerUp == null && !pickupTriggered) {
+						getComponent(EventComponent.class).publishedEvents.add(new Event("PickPowerUp" + other.hashCode(), null));
+						pickupTriggered = true;
+					}
 				} 
 				
 				if ((other.collisionResponseFlags & PhysicsComponent.PLAYER_FLAG) != 0) {
@@ -143,6 +147,7 @@ public class Player extends Entity {
 			public void onEventObserved(Event event) {
 				EventComponent eventComp = getComponent(EventComponent.class);
 				if (event.message.contentEquals("CollectPowerUp")) {
+					pickupTriggered = false;
 					PowerUp powerup = (PowerUp) event.data;
 					Player.this.powerUp = powerup;
 					getComponent(SoundComponent.class).getSoundEffect("PowerUpPickUp").shouldPlay = true;
@@ -162,7 +167,7 @@ public class Player extends Entity {
 			@Override
 			public void onMyEventObserved(Event event) {
 				EventComponent eventComp = getComponent(EventComponent.class);
-				if (event.message.contentEquals("PickPowerUp")) {
+				if (event.message.contains("PickPowerUp")) {
 					eventComp.publishedEvents.removeValue(event, false);
 					eventComp.observedEvents.add("CollectPowerUp");
 				}
@@ -176,7 +181,7 @@ public class Player extends Entity {
 			}
 		});
 		
-		ec.observedEvents.add("PickPowerUp", "Caught");
+		ec.observedEvents.add("Caught");
 		addComponent(ec);
 		
 		/////////////////////////////// Sound component ////////////////////////////////
@@ -188,18 +193,18 @@ public class Player extends Entity {
 		
 		/////////////////////////////// Gui component ////////////////////////////////
 		Group group = new Group();
-		group.setSize(Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight() / 8.f);
+		group.setSize(RenderingSystem.GUI_WORLD_WIDTH / 2.f, RenderingSystem.GUI_WORLD_HEIGHT / 8.f);
 		
 		if (playerName.equals("P1"))
-			group.setPosition(0.f, Gdx.graphics.getHeight() * 7f/8f);
+			group.setPosition(0.f, RenderingSystem.GUI_WORLD_HEIGHT  / 8f * 7.f);
 		else 
-			group.setPosition(group.getWidth(), Gdx.graphics.getHeight() * 7f/8f);
+			group.setPosition(group.getWidth(), RenderingSystem.GUI_WORLD_HEIGHT / 8f * 7f);
 		
 		Label catchingLabel = new Label("Catching", new LabelStyle(CatchMe.font, Color.ORANGE));
 		catchingLabel.setSize(group.getWidth() / 4.f, group.getHeight());
 		catchingLabel.setPosition(group.getWidth() / 2.f - catchingLabel.getWidth() / 2.f, 0f);
 		catchingLabel.setAlignment(Align.center);
-		catchingLabel.setFontScale(2.f);
+		catchingLabel.setFontScale(1.2f);
 		group.addActor(catchingLabel);
 		
 		Image powerUpImage = new Image();
@@ -207,14 +212,21 @@ public class Player extends Entity {
 		if (playerName.equals("P1"))
 			powerUpImage.setPosition(group.getHeight() / 4.f, group.getHeight() / 4.f);
 		else 
-			powerUpImage.setPosition(group.getWidth() - group.getHeight(), group.getHeight() / 2f);
+			powerUpImage.setPosition(group.getWidth() - group.getHeight(), group.getHeight() / 4f);
 		group.addActor(powerUpImage);
+		
+		Label powerUpCounterLabel = new Label("", new LabelStyle(CatchMe.font, Color.WHITE));
+		powerUpCounterLabel.setPosition(powerUpImage.getX(), powerUpImage.getY());
+		powerUpCounterLabel.setSize(powerUpImage.getWidth(), powerUpImage.getHeight());
+		powerUpCounterLabel.setFontScale(1.5f);
+		powerUpCounterLabel.setAlignment(Align.center);
+		group.addActor(powerUpCounterLabel);
 		
 		addComponent(new GuiComponent(group));
 	}
 	
-	public PowerUp getPowerUp() {
-		return powerUp;
+	public boolean isCatching() {
+		return catching;
 	}
 	
 	public void walk(Directions direction) {
@@ -248,12 +260,13 @@ public class Player extends Entity {
 	}
 	
 	public void usePowerUp() {
-		if (powerUp != null && !powerUp.isUsed())
+		if (powerUp != null && !powerUp.isUsed()) {
 			powerUp.use(this);
+		}
 	}
 	
 	public void performCatch() {
-		if (inCatchRange && catching) {
+		if (inCatchRange && catching && blockedDuration <= 0.f) {
 			getComponent(EventComponent.class).publishedEvents.add(new Event("Caught", playerName));
 			catching = false;
 		}
@@ -268,9 +281,12 @@ public class Player extends Entity {
 				
 		if (powerUp != null && powerUp.isUsed()) {
 			powerUp.update(this, deltaTime);
+			Label counter = (Label)((Group) getComponent(GuiComponent.class).getGuiElement()).getChild(2);
+			counter.setText(Integer.toString((int) powerUp.getTimeToFinish()));
 			if (powerUp.isFinished()) {
 				powerUp = null;
 				((Image)((Group) getComponent(GuiComponent.class).getGuiElement()).getChild(1)).setDrawable(null);
+				counter.setText("");
 			}
 		}
 		

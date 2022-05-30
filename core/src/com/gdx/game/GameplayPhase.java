@@ -54,7 +54,7 @@ public class GameplayPhase extends GamePhase {
 	private TiledMap map;
 	private final int mapWidth, mapHeight;
 	private float timeToNextPowerUp = 0f;
-	private static final float POWERUP_RESPAWN_TIME = 20f;
+	private static final float POWERUP_RESPAWN_TIME = 30f;
 	
 	private enum PowerUpItem {
 		SPEED(SpeedBootsPowerUp.class),
@@ -165,7 +165,6 @@ public class GameplayPhase extends GamePhase {
 			availableItemPositions.get(availableItemPositions.indexOf(new Pair<>(items.get(i).getInitialPosition(), true), false)).second = false;
 			items.removeIndex(i);
 		}
-
 	}
 	
 	private void spawnRandomPowerUp(float deltaTime) {
@@ -244,7 +243,7 @@ public class GameplayPhase extends GamePhase {
 
 	@Override
 	public boolean isFinished() {
-		return false;
+		return timeCounter.isTimeUp() && (!player1.isCatching() || !player2.isCatching());
 	}
 
 	@Override

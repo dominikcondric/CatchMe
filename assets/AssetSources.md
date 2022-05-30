@@ -1,4 +1,4 @@
-#
+# Assets
 I made this list to avoid redistribution of other creators' assets on GitHub, so before starting a game download all of the following assets in this directory and unpack them.
 
 ## Asset list:
@@ -8,3 +8,4 @@ I made this list to avoid redistribution of other creators' assets on GitHub, so
 4. https://opengameart.org/content/red-curtain
 5. https://opengameart.org/content/footsteps-leather-cloth-armor
 6. https://opengameart.org/content/8-bit-sound-effects-library
+7. https://opengameart.org/content/happy-arcade-tune

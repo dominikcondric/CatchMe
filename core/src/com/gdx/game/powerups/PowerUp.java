@@ -30,6 +30,10 @@ public abstract class PowerUp {
 	public final boolean isFinished() {
 		return elapsedTimeToFinish <= 0.f;
 	}
+	
+	public float getTimeToFinish() {
+		return elapsedTimeToFinish;
+	}
 
 	public boolean isUsed() {
 		return used;

@@ -6,7 +6,6 @@ import com.gdx.game.powerups.PowerUp;
 
 import ecs.ComponentDatabase;
 import ecs.Entity;
-import ecs.components.CollisionCallback;
 import ecs.components.EventComponent;
 import ecs.components.PhysicsComponent;
 import ecs.components.PhysicsComponent.BodyType;
@@ -21,7 +20,7 @@ public class Item extends Entity {
 	private float hoverMultiplier = .5f;
 	private float hoverDistance = 0.f;
 	private final Vector2 initialPosition;
-	private boolean inCollision = false;
+	private final String pickupEventName;
 	
 	public Item(ComponentDatabase componentDB, PowerUp powerup, float positionX, float positionY) {
 		super(componentDB);
@@ -33,14 +32,7 @@ public class Item extends Entity {
 		spriteComponent.getSprite().setSize(0.75f, 0.75f);
 		addComponent(spriteComponent);
 		
-		PhysicsComponent physicsComp = new PhysicsComponent(new Vector2(positionX + 0.5f, positionY + 0.5f), new CollisionCallback() {
-			
-			@Override
-			public void onCollision(Fixture fixture) {
-				inCollision = true;
-			}
-		});
-		
+		PhysicsComponent physicsComp = new PhysicsComponent(new Vector2(positionX + 0.5f, positionY + 0.5f), null);
 		Fixture fixture = physicsComp.addFixture(new Vector2(-0.375f, -0.375f), new Vector2(.75f, .75f), BodyType.Static, true);
 		fixture.collisionInitiationFlags = PhysicsComponent.PLAYER_FLAG;
 		fixture.collisionResponseFlags = PhysicsComponent.ITEM_FLAG;
@@ -52,13 +44,14 @@ public class Item extends Entity {
 			
 			@Override
 			public void onMyEventObserved(Event event) {
+				EventComponent eventComponent = getComponent(EventComponent.class);
+				eventComponent.publishedEvents.removeValue(event, false);
 				Item.this.destroy = true;
 			}
 			
 			@Override
 			public void onEventObserved(Event event) {
-				if (event.message.contentEquals("PickPowerUp") && inCollision) {
-					System.out.println("aa");
+				if (event.message.contains("PickPowerUp")) {
 					EventComponent eventComponent = getComponent(EventComponent.class);
 					eventComponent.publishedEvents.add(new Event("CollectPowerUp", Item.this.powerup));
 					eventComponent.observedEvents.removeValue(event.message, false);
@@ -67,13 +60,13 @@ public class Item extends Entity {
 		});
 		
 		
-		eventComponent.observedEvents.add("PickPowerUp");
+		pickupEventName = "PickPowerUp" + fixture.hashCode();
+		eventComponent.observedEvents.add(pickupEventName);
 		addComponent(eventComponent);
 	}
 
 	@Override
 	public void update(float deltaTime) {
-		inCollision = false;
 		PhysicsComponent physicsComp = getComponent(PhysicsComponent.class);
 		hoverDistance += deltaTime * hoverMultiplier;
 		if (hoverDistance > 0.3f) { 

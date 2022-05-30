@@ -55,16 +55,15 @@ public class CatchMe extends ApplicationAdapter {
 			gamePhase = gamePhase.getNewGamePhase();
 			gamePhase.setCommands(commandMapper);
 			gamePhase.update(Gdx.graphics.getDeltaTime());
-		} else {
-			gamePhase.update(Gdx.graphics.getDeltaTime());
 		}
 	}
 	
 	@Override
 	public void render() {
-		update();
+		gamePhase.update(Gdx.graphics.getDeltaTime());
 		gamePhase.run(toolbox, viewport, Gdx.graphics.getDeltaTime());
 		executeCommands();
+		update();
 	}
 	
 	private void executeCommands() {
@@ -78,7 +77,8 @@ public class CatchMe extends ApplicationAdapter {
 	
 	@Override
 	public void resize(int width, int height) {
-		viewport.setScreenSize(width / 2, height);
+		viewport.update(width / 2, height);
+		renderingSystem.onScreenResize(width, height);
 	}
 
 	@Override

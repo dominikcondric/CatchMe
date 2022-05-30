@@ -91,7 +91,7 @@ public class PhysicsSystem {
 							CollisionCallback c1Callback = c1.getPhysicsComponent().getCollisionCallback();
 							CollisionCallback c2Callback = c2.getPhysicsComponent().getCollisionCallback();
 							if (c1Callback != null) {
-								c1Callback.onCollision(c1);
+								c1Callback.onCollision(c2);
 							}
 							
 							if (c2Callback != null) {

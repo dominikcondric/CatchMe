@@ -16,6 +16,7 @@ import ecs.ComponentDatabase;
 import ecs.Entity;
 import ecs.components.GuiComponent;
 import ecs.components.SoundComponent;
+import ecs.systems.RenderingSystem;
 
 public class CharacterPicker extends Entity implements Disposable {
 	private Image characterImage;
@@ -56,9 +57,11 @@ public class CharacterPicker extends Entity implements Disposable {
 	}
 	
 	public void confirmPick() {
-		pickConfirmed = true;
-		readyLabel.setText("Ready!");
-		getComponent(SoundComponent.class).getSoundEffect("PickConfirmed").shouldPlay = true;
+		if (!pickConfirmed) {
+			pickConfirmed = true;
+			readyLabel.setText("Ready!");
+			getComponent(SoundComponent.class).getSoundEffect("PickConfirmed").shouldPlay = true;
+		}
 	}
 	
 	public int getTextureIndex() {
@@ -72,32 +75,32 @@ public class CharacterPicker extends Entity implements Disposable {
 	private void addComponents(boolean leftScreen) {
 		Table table = new Table();
 		table.center();
-		int screenWidth = Gdx.graphics.getWidth();
-		int screenHeight = Gdx.graphics.getHeight();
+		final int screenWidth = RenderingSystem.GUI_WORLD_WIDTH;
+		final int screenHeight = RenderingSystem.GUI_WORLD_HEIGHT;
 		table.setSize(screenWidth / 2, screenHeight / 2);
 		if (leftScreen)
 			table.setPosition(0, screenHeight / 4.f);
 		else
 			table.setPosition(screenWidth / 2, screenHeight / 4.f);
 			
-		table.row().center().height(table.getHeight() / 4.f);
+		table.row().center().height(table.getHeight() / 5.f);
 		Label pickCharacterLabel = new Label("Pick your character", new LabelStyle(CatchMe.font, Color.ORANGE));
-		pickCharacterLabel.setFontScale(2.5f);
+		pickCharacterLabel.setFontScale(1.3f);
 		table.add(pickCharacterLabel).colspan(3);
 		
-		table.row().center().width(table.getWidth() / 10f).height(table.getHeight() / 2.f);
+		table.row().center().width(table.getWidth() / 12f).height(table.getHeight() / 5.f * 3f);
 		Image leftArrowImage = new Image(new TextureRegionDrawable(new Texture("LeftArrow.png")));
 		table.add(leftArrowImage);
 		characterImage = new Image(new TextureRegionDrawable(characterTextures[0]));
 		characterImage.setSize(table.getHeight(), table.getHeight());
-		table.add(characterImage).width(table.getHeight() / 2.f);
+		table.add(characterImage).width(table.getHeight() / 5f * 3f);
 		Image rightArrowImage = new Image(new TextureRegionDrawable(new Texture("RightArrow.png")));
 		table.add(rightArrowImage);
 		addComponent(new GuiComponent(table));
 		
-		table.row().height(table.getHeight() / 4.f).center();
+		table.row().height(table.getHeight() / 5.f).center();
 		readyLabel = new Label("", new LabelStyle(CatchMe.font, Color.GREEN));
-		readyLabel.setFontScale(2.f);
+		readyLabel.setFontScale(1.3f);
 		table.add(readyLabel).colspan(3);
 		
 		SoundComponent soundComp = new SoundComponent();

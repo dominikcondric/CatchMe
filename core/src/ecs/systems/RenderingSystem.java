@@ -28,12 +28,13 @@ public class RenderingSystem implements Disposable {
 	private OrthogonalTiledMapRenderer mapRenderer;
 	private ShapeRenderer shapeRenderer;
 	private Stage gui;
+	public static final int GUI_WORLD_WIDTH = 1000, GUI_WORLD_HEIGHT = 500;
 	
 	public RenderingSystem() {
 		spriteBatch = new SpriteBatch();
 		mapRenderer = new OrthogonalTiledMapRenderer(null, 1.f / 32.f, spriteBatch);
 		shapeRenderer = new ShapeRenderer();
-		gui = new Stage(new FitViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight()), spriteBatch);
+		gui = new Stage(new FitViewport(GUI_WORLD_WIDTH, GUI_WORLD_HEIGHT), spriteBatch);
 	}
 	
 	public void clearScreen() {
@@ -60,6 +61,7 @@ public class RenderingSystem implements Disposable {
 	}
 	
 	public void renderGUI(ImmutableArray<GuiComponent> guiComponents) {
+		gui.getViewport().apply();
 		if (GuiComponent.stageModified) {
 			gui.clear();
 			for (GuiComponent guiComp  : guiComponents) {
@@ -67,7 +69,6 @@ public class RenderingSystem implements Disposable {
 			}
 		}
 		
-		gui.getViewport().apply();
 		gui.act();
 		gui.draw();
 	}
@@ -119,6 +120,6 @@ public class RenderingSystem implements Disposable {
 	}
 	
 	public void onScreenResize(int width, int height) {
-		gui.getViewport().setScreenSize(width, height);
+		gui.getViewport().update(width, height, true);
 	}
 }

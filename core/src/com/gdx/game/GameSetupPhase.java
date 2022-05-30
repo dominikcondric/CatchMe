@@ -1,6 +1,8 @@
 package com.gdx.game;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 import ecs.ComponentDatabase;
@@ -18,6 +20,7 @@ public class GameSetupPhase extends GamePhase {
 	private ComponentDatabase componentDatabase;
 	private String[] characterTexturePaths;
 	private float timer = 5.f;
+	private Music music;
 	
 	public GameSetupPhase() {
 		this.componentDatabase = new ComponentDatabase();
@@ -30,6 +33,9 @@ public class GameSetupPhase extends GamePhase {
 			"Females//F_03.png", "Males//M_03.png", "Females//F_12.png", "Males//M_10.png", "Females//F_08.png", "Males//M_06.png",
 			"Males//M_01.png", "Females//F_02.png",  "Males//M_02.png", "Females//F_10.png", "Males//M_09.png", "Females//F_06.png" 
 		};
+		
+		music = Gdx.audio.newMusic(Gdx.files.internal("happy.mp3"));
+		music.setVolume(0.2f);
 	}
 	
 	@Override
@@ -47,7 +53,7 @@ public class GameSetupPhase extends GamePhase {
 	public void run(Toolbox toolbox, Viewport viewport, float deltaTime) {
 		toolbox.getRenderingSystem().clearScreen();
 		draw(toolbox.getRenderingSystem());
-		toolbox.getAudioSystem().playAudio(componentDatabase.getComponentArray(SoundComponent.class), null);
+		toolbox.getAudioSystem().playAudio(componentDatabase.getComponentArray(SoundComponent.class), music);
 	}
 	
 	public void draw(RenderingSystem renderingSystem) {
@@ -67,7 +73,7 @@ public class GameSetupPhase extends GamePhase {
 	public GamePhase getNewGamePhase() {
 		if (isFinished()) {
 			return new GameplayPhase("32_Characters//" + characterTexturePaths[picker1.getTextureIndex()],
-					"32_Characters//" + characterTexturePaths[picker2.getTextureIndex()], 60f);
+					"32_Characters//" + characterTexturePaths[picker2.getTextureIndex()], 120f);
 		}
 		
 		return null;
@@ -77,6 +83,8 @@ public class GameSetupPhase extends GamePhase {
 	public void update(float deltaTime) {
 		if (picker1.isPickConfirmed() && picker2.isPickConfirmed() && timer == 5f) {
 			picker1.playGetReadySound();
+			music.dispose();
+			music = null;
 			timer -= deltaTime;
 		}
 		

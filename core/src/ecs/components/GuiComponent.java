@@ -28,7 +28,9 @@ public class GuiComponent implements Component, Disposable {
 	
 	private void disposeImage(Actor actor) {
 		if (actor instanceof Image) {
-			((TextureRegionDrawable)((Image) actor).getDrawable()).getRegion().getTexture().dispose();
+			Image image = (Image) actor;
+			if (image.getDrawable() != null)
+				((TextureRegionDrawable) image.getDrawable()).getRegion().getTexture().dispose();
 		} else if (actor instanceof Group) {
 			for (Actor a : ((Group) guiElement).getChildren()) {
 				disposeImage(a);
