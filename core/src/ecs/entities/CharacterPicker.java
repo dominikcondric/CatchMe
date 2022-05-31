@@ -118,4 +118,8 @@ public class CharacterPicker extends Entity implements Disposable {
 	public void dispose() {
 		characterTextures[0].getTexture().dispose();
 	}
+
+	@Override
+	public void update(float deltaTime) {
+	}
 }

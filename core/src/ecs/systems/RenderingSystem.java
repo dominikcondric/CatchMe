@@ -114,8 +114,8 @@ public class RenderingSystem implements Disposable {
 	@Override
 	public void dispose() {
 		spriteBatch.dispose();
-		mapRenderer.dispose();
 		shapeRenderer.dispose();
+		mapRenderer.dispose();
 		gui.dispose();
 	}
 	

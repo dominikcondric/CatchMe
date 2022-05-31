@@ -26,4 +26,8 @@ public class Obstacle extends Entity {
 		fixture.collisionResponseFlags = PhysicsComponent.OBSTACLE_FLAG;
 		addComponent(physicsComp);
 	}
+
+	@Override
+	public void update(float deltaTime) {
+	}
 }

@@ -14,9 +14,8 @@ public abstract class Entity {
 		componentDatabase = componentDB;
 	}
 	
-	public void update(float deltaTime) {}
+	public abstract void update(float deltaTime);
 	
-
 	final protected <T extends Component> void addComponent(T component) {
 		if (!hasComponent(component.getClass())) {
 			components.put(component.getClass(), component);
@@ -41,7 +40,7 @@ public abstract class Entity {
 		return false;
 	}
 	
-	public boolean shouldDestroy() {
+	public final boolean shouldDestroy() {
 		if (destroy) {
 			for (ObjectMap.Entry<Class<? extends Component>, Component> entry : components) {
 				componentDatabase.removeComponent(entry.key.cast(entry.value));

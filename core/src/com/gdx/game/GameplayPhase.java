@@ -7,6 +7,9 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -248,6 +251,25 @@ public class GameplayPhase extends GamePhase {
 
 	@Override
 	public GamePhase getNewGamePhase() {
-		return null;
+		TextureRegion texRegion = new TextureRegion();
+		AnimationComponent player1AnimationComponent = player1.getComponent(AnimationComponent.class);
+		AnimationComponent player2AnimationComponent = player2.getComponent(AnimationComponent.class);
+		player1AnimationComponent.setActiveAnimation("IdleDown");
+		player1AnimationComponent.updateAnimation(0f);
+		player2AnimationComponent.setActiveAnimation("IdleDown");
+		player2AnimationComponent.updateAnimation(0f);
+				
+		Sprite player1Sprite = player1AnimationComponent.getCurrentSprite();
+		Sprite player2Sprite = player2AnimationComponent.getCurrentSprite();
+		
+		if (player1.isCatching()) {
+			texRegion.setTexture(new Texture(player2Sprite.getTexture().getTextureData()));
+			texRegion.setRegion((int)player2Sprite.getRegionX(), (int)player2Sprite.getRegionY(), (int)player2Sprite.getRegionWidth(), (int)player2Sprite.getRegionHeight());
+			return new EndPhase(texRegion, player2.getPlayerName());
+		} else {
+			texRegion.setTexture(new Texture(player1Sprite.getTexture().getTextureData()));
+			texRegion.setRegion((int)player1Sprite.getRegionX(), (int)player1Sprite.getRegionY(), (int)player1Sprite.getRegionWidth(), (int)player1Sprite.getRegionHeight());
+			return new EndPhase(texRegion, player1.getPlayerName());
+		}
 	}
 }

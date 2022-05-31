@@ -71,12 +71,8 @@ public class GameSetupPhase extends GamePhase {
 
 	@Override
 	public GamePhase getNewGamePhase() {
-		if (isFinished()) {
-			return new GameplayPhase("32_Characters//" + characterTexturePaths[picker1.getTextureIndex()],
-					"32_Characters//" + characterTexturePaths[picker2.getTextureIndex()], 120f);
-		}
-		
-		return null;
+		return new GameplayPhase("32_Characters//" + characterTexturePaths[picker1.getTextureIndex()],
+				"32_Characters//" + characterTexturePaths[picker2.getTextureIndex()], 120f);
 	}
 
 	@Override

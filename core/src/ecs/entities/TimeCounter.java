@@ -32,7 +32,7 @@ public class TimeCounter extends Entity {
 		addComponent(new GuiComponent(counterLabel));
 		
 		SoundComponent soundComp = new SoundComponent();
-		soundComp.addSound("TimeUp", Gdx.files.internal("8-Bit Sound Library//8-Bit Sound Library//Mp3//Jingle_Win_01.mp3"), false, false);
+		soundComp.addSound("TimeUp", Gdx.files.internal("8-Bit Sound Library//8-Bit Sound Library//Mp3//Jingle_Achievement_01.mp3"), false, false);
 		soundComp.addSound("GameOver", Gdx.files.internal("8-Bit Sound Library//8-Bit Sound Library//Mp3//Climb_Rope_Loop_00.mp3"), false, false);
 		addComponent(soundComp);
 	}

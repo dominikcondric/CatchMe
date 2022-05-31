@@ -274,7 +274,6 @@ public class Player extends Entity {
 	
 	@Override
 	public void update(float deltaTime) {
-		AnimationComponent animationComponent = getComponent(AnimationComponent.class);
 		if (blockedDuration > 0.f)
 			blockedDuration -= deltaTime;
 			
@@ -290,8 +289,9 @@ public class Player extends Entity {
 			}
 		}
 		
+		AnimationComponent animationComponent = getComponent(AnimationComponent.class);
 		if (!moving) {
-			getComponent(AnimationComponent.class).setActiveAnimation(animationComponent.getActiveAnimation().replace("Walk", "Idle"));
+			animationComponent.setActiveAnimation(animationComponent.getActiveAnimation().replace("Walk", "Idle"));
 			getComponent(PhysicsComponent.class).setMovingDirection(new Vector2(0.f, 0.f));
 			getComponent(SoundComponent.class).getSoundEffect("Footsteps").shouldPlay = false;
 		}

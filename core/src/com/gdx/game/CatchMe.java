@@ -53,8 +53,12 @@ public class CatchMe extends ApplicationAdapter {
 			commandMapper.removeAllCommands();
 			gamePhase.dispose();
 			gamePhase = gamePhase.getNewGamePhase();
-			gamePhase.setCommands(commandMapper);
-			gamePhase.update(Gdx.graphics.getDeltaTime());
+			if (gamePhase != null) {
+				gamePhase.setCommands(commandMapper);
+				gamePhase.update(Gdx.graphics.getDeltaTime());
+			} else {
+				Gdx.app.exit();
+			}
 		}
 	}
 	
