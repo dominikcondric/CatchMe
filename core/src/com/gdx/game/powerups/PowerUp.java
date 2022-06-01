@@ -4,8 +4,9 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 import ecs.entities.Player;
+import utility.Resetable;
 
-public abstract class PowerUp {
+public abstract class PowerUp implements Resetable {
 	private boolean used = false;
 	protected float elapsedTimeToFinish;
 	public final TextureRegion textureRegion;
@@ -37,5 +38,10 @@ public abstract class PowerUp {
 
 	public boolean isUsed() {
 		return used;
+	}
+
+	@Override
+	public void reset() {
+		used = false;
 	}
 }

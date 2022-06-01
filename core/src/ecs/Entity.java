@@ -40,10 +40,19 @@ public abstract class Entity {
 		return false;
 	}
 	
+	final public <T extends Component> void removeComponent(Class<T> componentType) {
+		if (!components.containsKey(componentType)) {
+			return;
+		}
+		
+		componentDatabase.removeComponent(getComponent(componentType));
+		components.remove(componentType);
+	}
+	
 	public final boolean shouldDestroy() {
 		if (destroy) {
 			for (ObjectMap.Entry<Class<? extends Component>, Component> entry : components) {
-				componentDatabase.removeComponent(entry.key.cast(entry.value));
+				removeComponent(entry.key);
 			}
 		}
 

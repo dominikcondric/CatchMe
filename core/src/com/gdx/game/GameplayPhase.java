@@ -1,8 +1,5 @@
 package com.gdx.game;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.Random;
-
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.audio.Music;
@@ -42,14 +39,15 @@ import patterns.commands.UsePowerupCommand;
 import patterns.commands.WalkCommand;
 import utility.CommandMapper;
 import utility.ImmutableArray;
-import utility.Pair;
+import utility.ObjectPool;
+import utility.ObjectPool.PoolElementFactory;
 import utility.Toolbox;
 
 public class GameplayPhase extends GamePhase {
 	private ComponentDatabase componentDatabase;
 	private Array<Obstacle> obstacles;
-	private Array<Item> items;
-	private Array<Pair<Vector2, Boolean>> availableItemPositions;
+	private ObjectPool<Item> items;
+	private Array<Vector2> availableFreePositions;
 	private Player player1;
 	private Player player2;
 	private TimeCounter timeCounter;
@@ -57,36 +55,15 @@ public class GameplayPhase extends GamePhase {
 	private TiledMap map;
 	private final int mapWidth, mapHeight;
 	private float timeToNextPowerUp = 0f;
-	private static final float POWERUP_RESPAWN_TIME = 30f;
-	
-	private enum PowerUpItem {
-		SPEED(SpeedBootsPowerUp.class),
-		LIGHT(LightPowerUp.class);
-		
-		private final Class<? extends PowerUp> powerUpClass;
-		PowerUpItem(Class<? extends PowerUp> powerUpClass) {
-			this.powerUpClass = powerUpClass;
-		}
-		
-		public static final PowerUp getRandomPowerUp() {
-			try {
-				return PowerUpItem.values()[new Random().nextInt(PowerUpItem.values().length)].powerUpClass.getConstructor().newInstance();
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
-				e.printStackTrace();
-			}
-			
-			return null;
-		}
-	}
+	private static final float POWERUP_RESPAWN_TIME = 10f;
 	
 	public GameplayPhase(String player1TexPath, String player2TexPath, float matchLength) {
 		this.componentDatabase = new ComponentDatabase();
 		obstacles = new Array<Obstacle>();
-		items = new Array<Item>();
-		availableItemPositions = new Array<>();
+		
 		timeCounter = new TimeCounter(componentDatabase, matchLength);
 		map = new TmxMapLoader().load("Maps//Map.tmx");
+		availableFreePositions = new Array<>();
 		
 		gameplayMusic = Gdx.audio.newMusic(Gdx.files.internal("Red Curtain.ogg"));
 		gameplayMusic.setLooping(true);
@@ -102,13 +79,31 @@ public class GameplayPhase extends GamePhase {
 			Rectangle rectangle = mapObject.getRectangle();
 			for (float x = rectangle.getX(); x < rectangle.x + rectangle.width; x += 32f) {
 				for (float y = rectangle.getY(); y < rectangle.y + rectangle.height; y += 32f) {
-					availableItemPositions.add(new Pair<>(new Vector2(x / 32.f, y / 32.f), false));
+					availableFreePositions.add(new Vector2(x / 32.f, y / 32.f));
 				}
 			}
 		}
 		
-		player1 = new Player(componentDatabase, true, availableItemPositions.random().first, player1TexPath);
-		player2 = new Player(componentDatabase, false, availableItemPositions.random().first, player2TexPath);
+		items = new ObjectPool<Item>(new PoolElementFactory<Item>() {
+			int counter = 0; 
+			
+			@Override
+			public Item generateElement() {
+				Vector2 randomPosition = availableFreePositions.random();
+				
+				PowerUp powerUp = null;
+				if (counter < 5)
+					powerUp = new LightPowerUp();
+				else if (counter < 10) 
+					powerUp = new SpeedBootsPowerUp();
+				
+				counter++;
+				return new Item(componentDatabase, powerUp, randomPosition.x, randomPosition.y);
+			}
+		}, 10);
+		
+		player1 = new Player(componentDatabase, true, availableFreePositions.random(), player1TexPath);
+		player2 = new Player(componentDatabase, false, availableFreePositions.random(), player2TexPath);
 	}
 	
 	public void setCommands(CommandMapper commandMapper) {
@@ -142,9 +137,7 @@ public class GameplayPhase extends GamePhase {
 		player2.update(deltaTime);
 		
 		// Update items
-		for (Item item : items) 
-			item.update(deltaTime);
-		destroyPickedItems();
+		updateItems(deltaTime);
 		
 		// Update animations
 		for (AnimationComponent animationComp : componentDatabase.getComponentArray(AnimationComponent.class)) {
@@ -156,33 +149,25 @@ public class GameplayPhase extends GamePhase {
 		timeCounter.update(deltaTime);
 	}
 	
-	private void destroyPickedItems() {
-		Array<Integer> itemsToDestroy = new Array<>();
-		for (int i = 0; i < items.size; ++i) {
-			if (items.get(i).shouldDestroy()) {
-				itemsToDestroy.add(i);
+	private void updateItems(float deltaTime) {
+		Array<Item> itemsToDestroy = new Array<>();
+		for (Item item : items) {
+			item.update(deltaTime);
+			if (item.shouldDestroy()) {
+				itemsToDestroy.add(item);
 			}
 		}
 		
-		for (Integer i : itemsToDestroy) {
-			availableItemPositions.get(availableItemPositions.indexOf(new Pair<>(items.get(i).getInitialPosition(), true), false)).second = false;
-			items.removeIndex(i);
+		for (Item item : itemsToDestroy) {
+			items.removeElement(item);
 		}
 	}
 	
 	private void spawnRandomPowerUp(float deltaTime) {
 		timeToNextPowerUp -= deltaTime;
 		if (timeToNextPowerUp < 0f) {
-			Vector2 randomPosition;
-			while (true) {
-				Pair<Vector2, Boolean> pointPair = availableItemPositions.get(new Random().nextInt(availableItemPositions.size));
-				if (pointPair.second == false) {
-					pointPair.second = true;
-					randomPosition = pointPair.first;
-					break;
-				}
-			}
-			items.add(new Item(componentDatabase, PowerUpItem.getRandomPowerUp(), randomPosition.x, randomPosition.y));
+			Item itemToSpawn = items.useNewElement(true);
+			itemToSpawn.getInitialPosition().set(availableFreePositions.random());
 			timeToNextPowerUp = POWERUP_RESPAWN_TIME;
 		}
 	}

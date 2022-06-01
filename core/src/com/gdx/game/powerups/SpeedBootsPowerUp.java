@@ -21,4 +21,10 @@ public class SpeedBootsPowerUp extends PowerUp {
 			player.getComponent(PhysicsComponent.class).setMoveMultiplier(5f);
 		}
 	}
+
+	@Override
+	public void reset() {
+		super.reset();
+		elapsedTimeToFinish = 10.f;
+	}
 }

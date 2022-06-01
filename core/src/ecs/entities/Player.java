@@ -1,5 +1,7 @@
 package ecs.entities;
 
+import java.lang.reflect.InvocationTargetException;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
@@ -149,7 +151,13 @@ public class Player extends Entity {
 				if (event.message.contentEquals("CollectPowerUp")) {
 					pickupTriggered = false;
 					PowerUp powerup = (PowerUp) event.data;
-					Player.this.powerUp = powerup;
+					try {
+						Player.this.powerUp = powerup.getClass().getConstructor().newInstance();
+					} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+							| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					getComponent(SoundComponent.class).getSoundEffect("PowerUpPickUp").shouldPlay = true;
 					Image powerUpImage = (Image) ((Group)getComponent(GuiComponent.class).getGuiElement()).getChild(1);
 					powerUpImage.setDrawable(new TextureRegionDrawable(powerup.textureRegion));

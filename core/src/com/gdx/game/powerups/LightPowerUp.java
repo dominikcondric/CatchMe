@@ -24,4 +24,10 @@ public class LightPowerUp extends PowerUp {
 			lightComp.setRadius(lightComp.getRadius() / 3f);
 		}
 	}
+
+	@Override
+	public void reset() {
+		super.reset();
+		this.elapsedTimeToFinish = 10.f;
+	}
 }
