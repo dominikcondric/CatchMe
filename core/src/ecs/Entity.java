@@ -1,5 +1,6 @@
 package ecs;
 
+import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.ObjectMap;
 
 import ecs.components.Component;
@@ -44,6 +45,10 @@ public abstract class Entity {
 		if (!components.containsKey(componentType)) {
 			return;
 		}
+		
+		Component component = getComponent(componentType);
+		if (component instanceof Disposable)
+			((Disposable) component).dispose();
 		
 		componentDatabase.removeComponent(getComponent(componentType));
 		components.remove(componentType);

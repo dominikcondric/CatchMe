@@ -3,8 +3,10 @@ package ecs.components;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Disposable;
 
-public class PhysicsComponent implements Component {
+public class PhysicsComponent implements Component, Disposable {
+	public static boolean dirtyFlag = false;
 	private CollisionCallback collisionCallback;
 	private Array<Fixture> fixtureList;
 	private Vector2 worldPosition;
@@ -20,6 +22,7 @@ public class PhysicsComponent implements Component {
 		public int collisionResponseFlags = 0;
 		
 		public Fixture(Vector2 relativePosition, Vector2 size, BodyType type, boolean sensor) {
+			dirtyFlag = true;
 			position = relativePosition;
 			this.size = size;
 			this.type = type;
@@ -104,5 +107,10 @@ public class PhysicsComponent implements Component {
 
 	public void setWorldPosition(Vector2 worldPosition) {
 		this.worldPosition = worldPosition;
+	}
+
+	@Override
+	public void dispose() {
+		dirtyFlag = true;
 	}
 }

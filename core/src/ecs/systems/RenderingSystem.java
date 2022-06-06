@@ -63,14 +63,15 @@ public class RenderingSystem implements Disposable {
 	public void renderGUI(ImmutableArray<GuiComponent> guiComponents) {
 		gui.getViewport().apply();
 		if (GuiComponent.stageModified) {
-			gui.clear();
 			for (GuiComponent guiComp  : guiComponents) {
-				gui.addActor(guiComp.getGuiElement());
+				if (!guiComp.getGuiElement().hasParent())
+					gui.addActor(guiComp.getGuiElement());
 			}
 		}
 		
 		gui.act();
 		gui.draw();
+		GuiComponent.stageModified = false;
 	}
 	
 	public void renderLights(ImmutableArray<LightComponent> lights, OrthographicCamera camera, float mapWidth, float mapHeight) {

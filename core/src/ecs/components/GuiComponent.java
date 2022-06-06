@@ -23,10 +23,12 @@ public class GuiComponent implements Component, Disposable {
 
 	@Override
 	public void dispose() {
+		guiElement.remove();
 		disposeImage(guiElement);
 	}
 	
 	private void disposeImage(Actor actor) {
+		
 		if (actor instanceof Image) {
 			Image image = (Image) actor;
 			if (image.getDrawable() != null)

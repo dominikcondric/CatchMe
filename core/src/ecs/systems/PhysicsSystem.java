@@ -19,8 +19,12 @@ public class PhysicsSystem {
 	}
 	
 	public void resolveCollisions(ImmutableArray<PhysicsComponent> physicsComponents, float deltaTime, float maxWidth, float maxHeight) {
+		if (PhysicsComponent.dirtyFlag)
+			quadTree.clear();
+		
 		for (PhysicsComponent physicsComp : physicsComponents) {
-			quadTree.addComponent(physicsComp);
+			if (PhysicsComponent.dirtyFlag)
+				quadTree.addComponent(physicsComp);
 			Vector2 worldPosition = physicsComp.getWorldPosition();
 			worldPosition.mulAdd(physicsComp.getMovingDirection(), physicsComp.getMoveMultiplier() * deltaTime);
 			physicsComp.setWorldPosition(worldPosition);
@@ -102,7 +106,5 @@ public class PhysicsSystem {
 				}
 			}
 		}
-
-		quadTree.clear();
 	}
 }

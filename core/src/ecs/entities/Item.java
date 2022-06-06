@@ -1,6 +1,8 @@
 package ecs.entities;
 
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.gdx.game.powerups.PowerUp;
 
@@ -32,7 +34,8 @@ public class Item extends Entity implements Resetable {
 	}
 	
 	private void createComponents() {
-		SpriteComponent spriteComponent = new SpriteComponent(new Sprite(powerup.textureRegion));
+		TextureRegion powerUpRegion = powerup.textureRegion;
+		SpriteComponent spriteComponent = new SpriteComponent(new Sprite(new TextureRegion(new Texture(powerUpRegion.getTexture().getTextureData()), powerUpRegion.getRegionX(), powerUpRegion.getRegionY(), powerUpRegion.getRegionWidth(), powerUpRegion.getRegionHeight())));
 		spriteComponent.getSprite().setPosition(initialPosition.x + 0.125f, initialPosition.y + 0.125f);
 		spriteComponent.getSprite().setSize(0.75f, 0.75f);
 		addComponent(spriteComponent);
