@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="2021.03.23" orientation="orthogonal" renderorder="right-down" width="50" height="30" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="132">
+<map version="1.5" tiledversion="2021.03.23" orientation="orthogonal" renderorder="right-down" width="50" height="30" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="137">
  <tileset firstgid="1" source="Tileset.tsx"/>
  <layer id="1" name="Background" width="50" height="30">
   <data encoding="csv">
@@ -261,11 +261,15 @@
   <object id="121" x="992" y="633" width="352" height="71"/>
   <object id="122" x="991.333" y="606" width="10" height="26.6667"/>
   <object id="123" x="1440" y="631.333" width="128" height="72.6667"/>
-  <object id="124" x="1024" y="864" width="64" height="64"/>
-  <object id="125" x="1152" y="864" width="64" height="64"/>
-  <object id="126" x="1280" y="864" width="64" height="64"/>
+  <object id="124" x="1024" y="878.333" width="64" height="49.6667"/>
+  <object id="125" x="1152" y="879.333" width="64" height="48.6667"/>
+  <object id="126" x="1280" y="877.667" width="64" height="50.3333"/>
   <object id="127" x="1408" y="864" width="64" height="64"/>
-  <object id="128" x="1536" y="864" width="32" height="64"/>
+  <object id="128" x="1536" y="879.333" width="32" height="48.6667"/>
+  <object id="133" x="992" y="704" width="9.75" height="96"/>
+  <object id="134" x="992" y="864" width="10" height="64"/>
+  <object id="135" x="32" y="288" width="32" height="32"/>
+  <object id="136" x="608" y="96" width="32" height="32"/>
  </objectgroup>
  <objectgroup id="8" name="ItemLocations">
   <object id="41" x="672" y="128" width="96" height="192"/>
